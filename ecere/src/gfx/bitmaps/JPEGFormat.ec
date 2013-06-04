@@ -200,24 +200,42 @@ class JPGFormat : BitmapFormat
 
          jpeg_read_header(&cinfo, TRUE);
 
-         if(bitmap.Allocate(null, cinfo.image_width, cinfo.image_height, 0, pixelFormat888, false))
+         if((bitmap.pixelFormat == pixelFormat888 &&
+            bitmap.driver == class(LFBDisplayDriver) &&
+            bitmap.width == cinfo.image_width && 
+            bitmap.height == cinfo.image_height)
+            || bitmap.Allocate(null, cinfo.image_width, cinfo.image_height, 0, pixelFormat888, false))
          {
             JSAMPARRAY buffer;
             ColorAlpha * picture;
+            int w = 0;
 
             jpeg_start_decompress(&cinfo);
             buffer = (*cinfo.mem->alloc_sarray) ((j_common_ptr) &cinfo, JPOOL_IMAGE, cinfo.output_width * cinfo.output_components, 1);
 
-            for(picture = (ColorAlpha *)bitmap.picture; cinfo.output_scanline < cinfo.output_height; picture += bitmap.stride) 
+            for(picture = (ColorAlpha *)bitmap.picture; cinfo.output_scanline < cinfo.output_height; picture += bitmap.stride - w)
             {
                int c;
+               byte * src;
+
                jpeg_read_scanlines(&cinfo, buffer, 1);
-               for(c = 0; c<cinfo.image_width; c++)
+               src = buffer[0];
+               w = cinfo.image_width;
+               if(cinfo.output_components == 1)
                {
-                  if(cinfo.output_components == 1)
-                     picture[c] = ColorAlpha { 255, { buffer[0][c], buffer[0][c], buffer[0][c] } };
-                  else
-                     picture[c] = ColorAlpha { 255, { buffer[0][c*3], buffer[0][c*3+1], buffer[0][c*3+2] } };
+                  for(c = 0; c<w; c++)
+                  {
+                     byte b = *(src++);
+                     *(picture++) = ColorAlpha { 255, { b, b, b } };
+                  }
+               }
+               else
+               {
+                  for(c = 0; c<w; c++)
+                  {
+                     *(picture++) = ColorAlpha { 255, { src[0], src[1], src[2] } };
+                     src += 3;
+                  }
                }
             }
             result = true;

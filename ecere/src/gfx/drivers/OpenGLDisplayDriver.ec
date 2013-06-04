@@ -2829,6 +2829,8 @@ class OpenGLDisplayDriver : DisplayDriver
    {
       float s2dw,s2dh,d2sw,d2sh;
       bool flipX = false, flipY = false;
+      // int bw = bitmap.height, bh = bitmap.width;
+      int bw = bitmap.width, bh = bitmap.height;
 
       //Logf("StretchDI\n");
 
@@ -2866,15 +2868,15 @@ class OpenGLDisplayDriver : DisplayDriver
          sh-=0-sy;
          sy=0;
       }
-      if(sx+sw>bitmap.width-1)
+      if(sx+sw>bw-1)
       {
-         w-=(int)((sx+sw-(bitmap.width-1)-1)*s2dw);
-         sw-=sx+sw-(bitmap.width-1)-1;
+         w-=(int)((sx+sw-(bw-1)-1)*s2dw);
+         sw-=sx+sw-(bw-1)-1;
       }
-      if(sy+sh>(bitmap.height-1))
+      if(sy+sh>(bh-1))
       {
-         h-=(int)((sy+sh-(bitmap.height-1)-1)*s2dh);
-         sh-=sy+sh-(bitmap.height-1)-1;
+         h-=(int)((sy+sh-(bh-1)-1)*s2dh);
+         sh-=sy+sh-(bh-1)-1;
       }
       //Clip against the edges of the surfaceination
       if(dx<surface.box.left)
@@ -2910,6 +2912,45 @@ class OpenGLDisplayDriver : DisplayDriver
 
       if(bitmap.pixelFormat == pixelFormat888 && !bitmap.paletteShades)
       {
+         /*
+         int ox = surface.offset.x, oy = surface.offset.y;
+         static int tex = 0;
+         static int lastSW = 0, lastSH = 0;
+         OGLSurface oglSurface = surface.driverData;
+         glColor4fv(oglSurface.bitmapMult);
+         if(!tex)
+            glGenTextures(1, &tex);
+         glBindTexture(GL_TEXTURE_2D, tex);
+         glPixelStorei(GL_UNPACK_ROW_LENGTH, bh);
+         glPixelStorei(GL_UNPACK_SKIP_PIXELS, sy);
+         glPixelStorei(GL_UNPACK_SKIP_ROWS, sx);
+         if(lastSW == sw && lastSH == sh)
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, sh, sw, GL_BGRA, GL_UNSIGNED_BYTE, bitmap.picture);
+         else
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, sh, sw, 0, GL_BGRA, GL_UNSIGNED_BYTE, bitmap.picture);
+         lastSW = sw;
+         lastSH = sh;
+         glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+         glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+         glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+         glEnable(GL_TEXTURE_2D);
+         glBegin(GL_QUADS);
+            glTexCoord2f(0, 0);
+            glVertex2f((float)dx+ox, (float)dy+oy);
+            glTexCoord2f(0, 1);
+            glVertex2f((float)dx+w+ox, (float)dy+oy);
+            glTexCoord2f(1, 1);
+            glVertex2f((float)dx+w+ox, (float)dy+h+oy);
+            glTexCoord2f(1, 0);
+            glVertex2f((float)dx+ox, (float)dy+h+oy);
+         glEnd();
+         glBindTexture(GL_TEXTURE_2D, 0);
+         // glDeleteTextures(1, &tex);
+         glDisable(GL_TEXTURE_2D);
+         */
+
          glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
          glPixelStorei(GL_UNPACK_ROW_LENGTH, bitmap.stride);
          glPixelStorei(GL_UNPACK_SKIP_PIXELS, sx);
@@ -2917,11 +2958,12 @@ class OpenGLDisplayDriver : DisplayDriver
          glRasterPos2d(dx,dy);
          //glPixelZoom(flipX ? -s2dw : s2dw, flipY ? s2dh : -s2dh);
          glPixelZoom(s2dw, -s2dh);
-         glDrawPixels(sw,sh,GL_BGRA_EXT,GL_UNSIGNED_BYTE, bitmap.picture);
+         glDrawPixels(sw, sh, GL_BGRA_EXT,GL_UNSIGNED_BYTE, bitmap.picture);
          glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
          glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
          glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
          glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+
       }
    }
 
