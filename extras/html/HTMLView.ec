@@ -125,6 +125,7 @@ class ObjectThread : Thread
                {
                   HTTPFile httpFile {};
                   file = httpFile;
+                  incref file;
                   //printf("Opening URL\n");
 
                   //((GuiApplication)__thisModule).PauseNetworkEvents();
@@ -150,6 +151,7 @@ class ObjectThread : Thread
                      char extension[MAX_EXTENSION];
                      entry.bitmap = Bitmap { alphaBlend = true };
                      entry.bitmap.LoadFromFile(file, GetExtension(path, extension), null);
+                     incref file;
                   }
                }
                delete file;
@@ -189,8 +191,9 @@ class ObjectThread : Thread
                      browserWindow.Update(null);
 
                      // ((GuiApplication)__thisModule).UpdateDisplay();
+                     display.Unlock();
                   }
-                  display.Unlock();
+
                   // TRIED MOVING THIS HERE BECAUSE OF printf("bug") in GuiApplication if(window.display.current)
                   ((GuiApplication)__thisModule).UpdateDisplay();
                }
@@ -707,14 +710,16 @@ class HTMLView : Window
 
    void Open(char * location, char * firstReferer)
    {
-      HTTPFile f {};
+      HTTPFile f { /*reuseConnection = false*/ };
       char referer[MAX_LOCATION] = "";
       char relocation[MAX_LOCATION];
       bool opened = false;
 
       strcpy(relocation, location);
 
-      if(strstr(location, "http://") != location)
+      // PrintLn("\n\n\nOpening new location: ", location, "\n");
+
+      if(strstr(location, "http://") != location && strstr(location, "https://") != location)
       {
          if(!FileExists(location))
          {
@@ -804,7 +809,10 @@ class HTMLView : Window
          */
          
       }
+      ((GuiApplication)__thisModule.application).Unlock();
+      // PrintLn("At position ", f.Tell(), " for ", fileName);
       delete f;
+      ((GuiApplication)__thisModule.application).Lock();
       NotifyPageOpened(master);
    }
 
@@ -1184,7 +1192,7 @@ class HTMLView : Window
          }
          if(linkBlock)
          {
-            if(strstr(linkBlock.href, "edit://") == linkBlock.href)
+            if(linkBlock.href && strstr(linkBlock.href, "edit://") == linkBlock.href)
                cursor = ((GuiApplication)__thisModule).GetCursor(iBeam);
             else
                cursor = ((GuiApplication)__thisModule).GetCursor(hand);

@@ -4567,7 +4567,7 @@ public dllexport void eInstance_Delete(Instance instance)
       bool ownVtbl;
 
 #ifdef MEMINFO
-      if(instance._class == (void *)0xecececec)
+      if(instance._class == (void *)0xecececececececec)
          _free(instance);
 #endif
 

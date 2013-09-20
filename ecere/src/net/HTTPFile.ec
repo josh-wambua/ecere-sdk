@@ -1,12 +1,27 @@
 #ifndef ECERE_NONET
 
+#include <stdio.h>
+
+import "list"
 import "network"
 
-static OldList connections { };
+class ConnectionsHolder
+{
+   List<HTTPConnection> connections { };
+
+   ~ConnectionsHolder()
+   {
+      HTTPConnection c;
+      while((c = connections[0]))
+         delete c;   // The HTTPConnection destructor will take out from the list
+   }
+}
+
+static ConnectionsHolder holder { };
 
 namespace net;
 
-#define BUFFERSIZE   65536
+/*static */define HTTPFILE_BUFFERSIZE = 65536;
 
 static Mutex connectionsMutex { };
 
@@ -18,7 +33,7 @@ static class ServerNode : BTNode
    {
       char * name = (char *)key;
       delete name;
-   }   
+   }
 }
 
 static class ServerNameCache
@@ -71,7 +86,7 @@ static char * GetString(char * string, char * what, int count)
 
 private class HTTPConnection : Socket
 {
-   HTTPConnection prevConnection, nextConnection;
+   class_no_expansion;
    char * server;
    int port;
    HTTPFile file;
@@ -80,24 +95,35 @@ private class HTTPConnection : Socket
 
    ~HTTPConnection()
    {
-      if(prevConnection || nextConnection || connections.first == this)
-         printf("");      
-   }
-   
-   HTTPConnection()
-   {
-      if(!connections.offset)
-         connections.offset = (uint)&((HTTPConnection)0).prevConnection;
+
+      // printf("Before TakeOut we have %d connections:\n", holder.connections.count); for(c : holder.connections) ::PrintLn(c.server); ::PrintLn("");
+      holder.connections.TakeOut(this);
+      /*
+      PrintLn(server, " Connection Closed (", holder.connections.count, ") opened");
+      printf("Now we have %d connections:\n", holder.connections.count);
+      for(c : holder.connections)
+      {
+         ::PrintLn(c.server);
+      }
+      ::PrintLn("");
+
+
+
+      */
+      delete server;
    }
 
    void OnDisconnect(int code)
    {
       connectionsMutex.Wait();
       if(file)
-         file.connection = null;
-      delete server;
-      connections.Remove(this);
+         delete file.connection; // This decrements the file's reference
+
       connectionsMutex.Release();
+
+      // PrintLn(server, " Disconnected Us");
+
+      delete this;         // The 'connections' reference
    }
 
    uint Open_OnReceive(const byte * buffer, uint count)
@@ -115,7 +141,7 @@ private class HTTPConnection : Socket
                gotEndLine = true;
                break;
             }
-         }   
+         }
          if(!gotEndLine)
             // Incomplete packet
             return pos;
@@ -130,10 +156,10 @@ private class HTTPConnection : Socket
             Log(line);
             */
             
-            /*
-            fwrite(buffer, 1, c, stdout);
-            puts("");
-            */
+#ifdef _DEBUG
+            /*fwrite(buffer, 1, c, stdout);
+            puts("");*/
+#endif
 
             if(!c)
             {
@@ -144,7 +170,7 @@ private class HTTPConnection : Socket
             {
                //file.openStarted = true;
                if((string = GetString((char *)buffer, "HTTP/1.1 ", count)) ||
-                       (string = GetString((char *)buffer, "HTTP/1.0 ", count)))
+                  (string = GetString((char *)buffer, "HTTP/1.0 ", count)))
                {
                   file.status = atoi(string);
                }
@@ -233,13 +259,13 @@ private class HTTPConnection : Socket
                {
                   //connection.file = null;
                   file.connection.file = null;
-                  file.connection = null;
+                  delete file.connection; // This decrements the file's reference
                }
             }
             return pos;
          }
 
-         read = Min(count, BUFFERSIZE - file.bufferCount);
+         read = Min(count, HTTPFILE_BUFFERSIZE - file.bufferCount);
          if(file.chunked)
          {
             read = Min(read, file.chunkSize);
@@ -258,22 +284,36 @@ private class HTTPConnection : Socket
          return read;
       }
       else
-         return count;   
+         return count;
    }
 }
 
 public class HTTPFile : File
 {
+   bool reuseConnection;
+   reuseConnection = true;
 public:
+   property bool reuseConnection
+   {
+      set { reuseConnection = value; }
+      get { return reuseConnection; }
+   }
    bool OpenURL(char * name, char * referer, char * relocation)
    {
       bool result = false;
-      if(this && strstr(name, "http://") == name)
+      String http, https;
+      if(!this || !name) return false;
+      http = strstr(name, "http://");
+      if(http != name) http = null;
+      https = http ? null : strstr(name, "https://"); if(https && https != name) https = null;
+
+      // ::PrintLn("Opening ", name, " ", (uint64)this, " in thread ", GetCurrentThreadID(), "\n");
+      if(this && (http || https))
       {
          char server[1024];
          char msg[1024];
          int len;
-         char * serverStart = ecere::net::GetString(name, "http://", 0);
+         char * serverStart = http ? ecere::net::GetString(name, "http://", 0) : ecere::net::GetString(name, "https://", 0);
          char * fileName = strstr(serverStart, "/");
          int port = 80;
          char * colon;
@@ -292,7 +332,7 @@ public:
 
          if(relocation && !fileName && name[strlen(name)-1] != '/')
          {
-            strcpy(relocation, "http://");
+            strcpy(relocation, http ? "http://" : "https://");
             strcat(relocation, server);
             strcat(relocation, "/");
          }
@@ -309,54 +349,100 @@ public:
          {
             this.connection.file = null;
             if(close)
-            {
                this.connection.Disconnect(0);
-               delete this.connection;
-            }
-            this.connection = null;
+            delete this.connection;
          }
 
          if(chunked)
          {
-            connectionsMutex.Release();
-            while(this.connection && this.connection.file)
+            while(this.connection && this.connection.connected && this.connection.file)
             {
+               connectionsMutex.Release();
                this.connection.Process();
+               connectionsMutex.Wait();
             }
-            connectionsMutex.Wait();
          }
-         
-         for(connection = connections.first; connection; connection = connection.nextConnection)
+
+         if(reuseConnection)
          {
-            if(!strcmpi(connection.server, server) && connection.port == port && !connection.file)
-               break;
+            bool retry = true;
+            while(retry)
+            {
+               retry = false;
+               connection = null;
+               for(c : holder.connections)
+               {
+                  if(!strcmpi(c.server, server) && c.port == port)
+                  {
+                     if(!c.file && c.connected)
+                     {
+                        connection = c;      // TOFIX: 'incref c' doesn't work
+                        incref connection;      // HTTPFile reference if we keep it
+                        connectionsMutex.Release();
+                        connection.ProcessTimeOut(0.000001);
+                        connectionsMutex.Wait();
+                        if(!connection.connected || connection.file)
+                        {
+                           // We're disconnected or reused already...
+                           retry = true;
+                           delete connection;
+                        }
+                        break;
+                     }
+                  }
+               }
+            }
+            if(connection)
+            {
+               // ::PrintLn("Reusing Connection ", (uint64)connection, " for ", name, " ", (uint64)this, " in thread ", GetCurrentThreadID(), "\n");
+               reuse = true;
+               connection.file = this;
+            }
          }
 
-         if(connection)
-         {
-            incref connection;
-            reuse = true;
-
-            connection.file = this;
-         }
-
+      tryagain:
          if(!connection)
          {
             char ipAddress[1024];
             connection = HTTPConnection { };
-            //incref connection;
+            incref connection;      // HTTPFile reference on success
             
             connection.file = this;
 
             connectionsMutex.Release();
 
-            if(serverNameCache.Resolve(server, ipAddress) && connection.Connect(ipAddress /*server*/, port))
+            if(serverNameCache.Resolve(server, ipAddress))
             {
-               connectionsMutex.Wait();
+               // ::PrintLn("No Connection - Connecting ", (uint64)connection, " for ", name, " ", (uint64)this, " in thread ", GetCurrentThreadID());
+               if(connection.Connect(ipAddress /*server*/, port))
+               {
+                  //::PrintLn("Successfully Connected for ", name, " ", (uint64)this, " in thread ", GetCurrentThreadID());
+                  //::PrintLn("Waiting on connectionsMutex for ", name, " ", (uint64)this, " in thread ", GetCurrentThreadID());
+                  connectionsMutex.Wait();
 
-               connections.Add(connection);
-               connection.server = CopyString(server);
-               connection.port = port;
+                  connection.server = CopyString(server);
+                  connection.port = port;
+
+                  //::PrintLn("Got connectionsMutex for ", name, " ", (uint64)this, " in thread ", GetCurrentThreadID());
+                  holder.connections.Add(connection);
+                  /*
+                  printf("Now we have %d connections:\n", holder.connections.count);
+                  for(c : holder.connections)
+                  {
+                     String s = c.server;
+                     ::Print("Server: ");
+                     ::PrintLn(c.server);
+                  }
+                  ::PrintLn("");
+                  */
+                  incref connection;   // Global List Reference
+               }
+               else
+               {
+                  // ::PrintLn("Connection Failed for ", name, " ", (uint64)this, " in thread ", GetCurrentThreadID());
+                  connectionsMutex.Wait();
+                  delete connection;
+               }
             }
             else
             {
@@ -367,6 +453,8 @@ public:
 
          if(connection)
          {
+            incref connection;      // local reference
+
             connection.OnReceive = HTTPConnection::Open_OnReceive;
             connection.file = this;
             this.connection = connection;
@@ -401,8 +489,8 @@ public:
             //strcat(msg, " HTTP/1.0\r\nHost: ");
             strcat(msg, server);
             strcat(msg, "\r\n");
+            strcat(msg, "Accept-Charset: UTF-8\r\n");
             strcat(msg, "Accept-Charset: ISO-8859-1\r\n");
-            //strcat(msg, "Accept-Charset: UTF-8\r\n");
             strcat(msg, "Connection: Keep-Alive\r\n");
             if(referer)
             {
@@ -413,14 +501,17 @@ public:
             strcat(msg, "\r\n");
             len = strlen(msg);
             
+            //::PrintLn("Releasing connectionsMutex before GET for ", name, " ", (uint64)this, " in thread ", GetCurrentThreadID());
             connectionsMutex.Release();
 
+            // ::PrintLn("Sending GET for ", name, " ", (uint64)this, " in thread ", GetCurrentThreadID(), "\n");
             connection.Send(msg, len);
 
-            while(this.connection && !done)
+            while(this.connection && this.connection.connected && !done)
             {
                this.connection.Process();
             }
+            //::PrintLn("Got DONE for ", name, " ", (uint64)this, " in thread ", GetCurrentThreadID(), "\n");
 
             if(this.connection)
             {
@@ -445,14 +536,14 @@ public:
                            // First time check if we already have bytes, second time wait for an event
                            this.connection.Process();
                            wait = true;
-                        }   
+                        }
                      }
                   }
                   else if(totalSizeSet)
                   {
                      done = false;
                      this.connection.OnReceive = HTTPConnection::Read_OnReceive;
-                     while(this.connection && position < totalSize)
+                     while(this.connection && this.connection.connected && position < totalSize)
                      {
                         connection.Process();
                         position += bufferCount;
@@ -469,14 +560,12 @@ public:
                      if(close)
                      {
                         this.connection.Disconnect(0);
-                        delete this.connection;
                         connection = null;
                      }
                   }
                   
-
                   status = 0;
-                  this.connection = null;
+                  delete this.connection; // This decrements the file's reference
                   this.relocation = null;
                   totalSize = 0;
                   totalSizeSet = false;
@@ -492,7 +581,13 @@ public:
             {
                connectionsMutex.Wait();
             }
-            if(reuse)
+            if(reuse && !status && connection && !connection.connected)
+            {
+               delete connection;
+               reuse = false;
+               goto tryagain;
+            }
+            else
                delete connection;
          }
          connectionsMutex.Release();
@@ -512,9 +607,11 @@ private:
             {
                done = false;
                this.connection.OnReceive = HTTPConnection::Read_OnReceive;
-               while(this.connection && position < totalSize)
+               while(this.connection && this.connection.connected && position + (bufferCount - bufferPos) < totalSize)
                {
+                  connectionsMutex.Release();
                   connection.Process();
+                  connectionsMutex.Wait();
                   position += bufferCount;
                   bufferCount = 0;
                }
@@ -525,22 +622,22 @@ private:
             {
                connection.file = null;
                if(close)
-               {
                   connection.Disconnect(0);
-                  delete connection;
-               }
-               connection = null;
+               delete connection;
             }
          }
          connectionsMutex.Release();
 
          if(chunked)
          {
-            while(connection && connection.file)
+            while(connection && connection.connected && connection.file)
             {
+               connectionsMutex.Release();
                connection.Process();
+               connectionsMutex.Wait();
             }
          }
+         //::PrintLn("Done with ", (uint64)this);
       }
    }
 
@@ -566,7 +663,7 @@ private:
             position += numbytes;
             read += numbytes;
 
-            if(bufferPos > BUFFERSIZE / 2)
+            if(bufferPos > HTTPFILE_BUFFERSIZE / 2)
             {
                // Shift bytes back to beginning of buffer
                uint shift = bufferCount - bufferPos;
@@ -578,14 +675,16 @@ private:
          }
          else
          {
-            if(!connection)
+            if(!connection || !connection.connected)
                eof = true;
             else
             {
                // First time check if we already have bytes, second time wait for an event
                connection.Process();
+               if(wait && bufferCount - bufferPos == 0)
+                  eof = true;
                wait = true;
-            }   
+            }
          }
          if(totalSizeSet && position >= totalSize)
             eof = true;
@@ -638,6 +737,7 @@ private:
    {
       aborted = true;
    }
+private:
 
    HTTPConnection connection;
    uint position;
@@ -651,7 +751,7 @@ private:
    char * relocation;
 
    // Buffering...
-   byte buffer[BUFFERSIZE];
+   byte buffer[HTTPFILE_BUFFERSIZE];
    uint bufferPos;
    uint bufferCount;
    bool aborted;
@@ -667,7 +767,7 @@ public HTTPFile FileOpenURL(char * name)
    {
       delete f;
       return null;
-   }   
+   }
 }
 
 #endif

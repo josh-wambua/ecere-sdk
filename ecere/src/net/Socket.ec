@@ -605,7 +605,7 @@ private:
          int count = 0;
 
          result = true;
-         if(recvBufferSize - recvBytes < MAX_RECEIVE)
+         if((int)recvBufferSize - recvBytes < MAX_RECEIVE)
          {
             recvBuffer = renew recvBuffer byte[recvBufferSize + MAX_RECEIVE];
             recvBufferSize += MAX_RECEIVE;
