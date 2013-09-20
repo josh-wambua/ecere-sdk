@@ -3469,6 +3469,8 @@ private:
       {
          key.code = (SmartKey)key.code;
       }
+      else if(!ch && key.alt)
+         key.code = 0;
 
       switch(key.code) //(ch || key.alt || key.ctrl) ? key.code : (Key)(SmartKey)key.code)
       {
@@ -4723,7 +4725,8 @@ private:
                         delete newline;
                      }
                      return false;
-                  } else if(!key.ctrl && !key.alt && ch != 128 && ch >= 32)
+                  }
+                  else if(!key.ctrl && !key.alt && ch != 128 && ch >= 32)
                   {
                      PutCh(ch);
                      return false;

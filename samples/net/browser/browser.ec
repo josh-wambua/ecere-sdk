@@ -32,7 +32,7 @@ class AddressBar : Window
    };
    Button home
    {
-      this, bevelOver = true, inactive = true, anchor = Anchor { left = 48, top = 0, bottom = 0 }, size = Size { 24 }, hotKey = ctrlH, bitmap = { "<:ecere>actions/goHome.png" };
+      this, bevelOver = true, inactive = true, anchor = Anchor { left = 52, top = 0, bottom = 0 }, size = Size { 24 }, hotKey = ctrlH, bitmap = { "<:ecere>actions/goHome.png" };
 
       bool NotifyClicked(Button button, int x, int y, Modifiers mods)
       {
@@ -42,7 +42,7 @@ class AddressBar : Window
    };
    Button refresh
    {
-      this, bevelOver = true, inactive = true, anchor = Anchor { left = 72, top = 0, bottom = 0 }, size = Size { 24 }, hotKey = f5, bitmap = { "<:ecere>actions/viewRefresh.png" };
+      this, bevelOver = true, inactive = true, anchor = Anchor { left = 76, top = 0, bottom = 0 }, size = Size { 24 }, hotKey = f5, bitmap = { "<:ecere>actions/viewRefresh.png" };
 
       bool NotifyClicked(Button button, int x, int y, Modifiers mods)
       {
@@ -50,16 +50,22 @@ class AddressBar : Window
          return true;
       }
    };
-   Label { this, anchor = Anchor { left = (96+5) }, labeledWindow = address };
+   Label { this, anchor = Anchor { left = (96+12) }, labeledWindow = address };
    EditBox address
    {
-      this, text = "Address", anchor = Anchor { left = (48+96), right = 60, top = 0, bottom = 0 }, hotKey = altD;
+      this, text = "Address:", anchor = Anchor { left = (16+48+96), right = 60, top = 0, bottom = 0 }, hotKey = altD;
 
       bool NotifyKeyDown(EditBox editBox, Key key, unichar ch)
       {
-         if((SmartKey)key == enter)
+         if(!go.disabled && (SmartKey)key == enter)
             ((Explorer)parent).Go(editBox.contents);
          return true;
+      }
+
+      void NotifyUpdate(EditBox editBox)
+      {
+         String location = ((Explorer)parent).htmlView.location;
+         go.disabled = !strcmp(location ? location : "", editBox.contents);
       }
    };
    Button go
@@ -86,6 +92,8 @@ class Explorer : Window
    FileDialog openFileDialog { caption = "Select a file or enter a URL... " };
    FileDialog saveFileDialog { type = save, caption = "Save to file... " };
 
+   icon = { ":newb.png" };
+
    tabCycle = true;
    background = activeBorder;
    hasMenuBar = true;
@@ -110,7 +118,7 @@ class Explorer : Window
 
       bool NotifySelect(MenuItem selection, Modifiers mods)
       {
-         Explorer { }.Create();
+         Explorer { state = normal }.Create();
          return true;
       }
    };
@@ -171,10 +179,9 @@ class Explorer : Window
       return true;
    }
 
-   bool OnCreate()
+   bool OnPostCreate()
    {  
-      //htmlView.Open("http://www.ecere.com/default.htm", NULL);
-      //htmlView.location = "http://www.ecere.com/default.htm");
+      addressBar.MakeActive();
       return true;
    }
 
@@ -244,7 +251,8 @@ class Explorer : Window
    void Refresh()
    {
       htmlView.MakeActive();
-      htmlView.location = history[historyPos];
+      if(history.count)
+         htmlView.location = history[historyPos];
    }
 
    bool Forward()
@@ -288,7 +296,7 @@ class Explorer : Window
 
 class BrowserApp : GuiApplication
 {
-   //driver = "OpenGL";
+   driver = "OpenGL";
    Explorer explorerWindow {};
 
    bool Init()

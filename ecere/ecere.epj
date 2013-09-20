@@ -139,7 +139,9 @@ from wherever you obtained them.
                "shell32",
                "winspool",
                "imm32",
-               "ungif"
+               "ungif",
+               "eay32",
+               "ssleay32"
             ],
             "LibraryDirs" : [
                "../deps/zlib/obj/release.$(PLATFORM)$(COMPILER_SUFFIX)",
@@ -193,8 +195,7 @@ from wherever you obtained them.
             "PreprocessorDefinitions" : [
                "_DEBUG",
                "BUILDING_ECERE_COM"
-            ],
-            "FastMath" : false
+            ]
          }
       },
       {
@@ -1983,7 +1984,8 @@ from wherever you obtained them.
                      ]
                   },
                   "Service.ec",
-                  "Socket.ec"
+                  "Socket.ec",
+                  "../extras/SSLSocket.ec"
                ],
                "Configurations" : [
                   {

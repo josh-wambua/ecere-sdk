@@ -15,7 +15,7 @@ Camera camera
 
 Light light
 {
-   diffuse = lightCoral;
+   diffuse = blue;
    orientation = Euler { pitch = 10, yaw = 30 };
 };
 
@@ -35,7 +35,7 @@ class Hello3D : Window
    {
       cube.Create(displaySystem);
       cube.transform.scaling = { 100, 100, 100 };
-      cube.transform.orientation = Euler { 50, 30, 50 };
+      cube.transform.orientation = Euler { roll = 50 };//50, 30, 50 };
       cube.UpdateTransform();
       return true;
    }

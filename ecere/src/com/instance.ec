@@ -19,12 +19,12 @@ import "Mutex"
 #endif
 
 // #define MEMINFO
-/*
+
 #ifdef MEMINFO
  #undef REDZONE
  #define REDZONE   256
 #endif
-*/
+
 #ifndef REDZONE
 #define REDZONE 0
 #endif
@@ -6581,6 +6581,10 @@ public int ISO8859_1toUTF8(char * source, char * dest, int max)
    for(c = 0; source[c]; c++)
    {
       unichar ch = ((byte *)source)[c];
+      switch(ch)
+      {
+         case 150: ch = (unichar)0x2012; break;
+      }
       if(ch < 0x80)
       {
          if(d + 1 >= max) break;

@@ -43,7 +43,8 @@
             "Debug" : false,
             "MemoryGuard" : false,
             "Optimization" : "Speed",
-            "TargetFileName" : "browser"
+            "TargetFileName" : "browser",
+            "Console" : false
          }
       }
    ],
@@ -57,10 +58,11 @@
             "../../../../ecere-sdk/extras/html/tables.ec"
          ]
       },
-      "browser.ec"
+      "browser.ec",
+      "resources.rc"
    ],
    "ResourcesPath" : "",
    "Resources" : [
-
+      "newb.png"
    ]
 }

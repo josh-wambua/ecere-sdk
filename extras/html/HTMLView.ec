@@ -4,6 +4,7 @@ import "htmlParser"
 
 enum BlockType
 {
+   HTML,
    TEXT = 1,
    IMAGE,
    BR,
@@ -15,7 +16,9 @@ enum BlockType
    TD,
    ANCHOR,
    INPUT,
-   FORM
+   FORM,
+   TITLE,
+   HEAD
 };
 
 define LEFT_MARGIN = 10;
@@ -31,7 +34,7 @@ define CELL_SPACING = 0;
 
 class RenderFlags { bool lineW:1,width:1,render:1,minW:1; };
 
-enum InputType { text, submit, radio, hidden };
+enum InputType { text, submit, checkbox, radio, hidden };
 
 class ImageEntry : struct
 {
@@ -293,10 +296,54 @@ static void ComputeImageSize(Block block)
       ComputeImageSize(child);
 }
 
+// Resources Cache
+Window sharedWindow
+{
+   visible = false;
+
+   bool OnLoadGraphics()
+   {
+      ImageEntry entry;
+      FontEntry fEntry;
+      for(entry = imageCache.first; entry; entry = entry.next)
+      {
+         entry.bitmap.MakeDD(displaySystem);
+         if(entry.bitmap && entry.bitmap.alphaBlend)
+         {
+            entry.bitmap.Convert(null, pixelFormat888, null);
+            // entry.bitmap.displaySystem = displaySystem;
+         }
+      }
+      for(fEntry = fontCache.first; fEntry; fEntry = fEntry.next)
+      {
+         if(!fEntry.font)
+            fEntry.font = displaySystem.LoadFont(fEntry.face, fEntry.size, fEntry.attribs);
+      }
+      return true;
+   }
+   
+   void OnUnloadGraphics()
+   {
+      ImageEntry entry;
+      FontEntry fontEntry;
+      while((entry = imageCache.first))
+      {
+         imageCache.Remove(entry);
+         delete entry;
+      }
+      while((fontEntry = fontCache.first))
+      {
+         displaySystem.UnloadFont(fontEntry.font);
+         fontCache.Remove(fontEntry);
+         delete fontEntry;
+      }
+   }
+};
+
 class HTMLView : Window
 {
    HTMLFile html {};
-   BitmapResource missing { "<:ecere>emblems/unreadable.png", window = this };
+   BitmapResource missing { "<:ecere>emblems/unreadable.png", window = sharedWindow /*this*/ };
    char * location;
    Block overLink, clickedLink;
    Block overBlock;
@@ -426,10 +473,23 @@ class HTMLView : Window
          {
             case submit:
                block.window = Button { this, text = block.value, position = Point { 10, 50 }, id = (int64)block, NotifyClicked = ButtonClicked, isDefault = true };
+               if(block.size)
+                  block.window.size = { w = (int)(block.size * 8) };
+               if(block.src)
+               {
+                  ((Button)block.window).bitmap = { block.src };
+                  ((Button)block.window).bevel = false;
+               }
                eInstance_IncRef(block.window);
                block.window.Create();
                block.window.cursor = ((GuiApplication)__thisModule).GetCursor(arrow);
                //if(!html.defaultButton) html.defaultButton = block.window;
+               break;
+            case checkbox:
+               block.window = Button { this, isCheckbox = true, position = Point { 10, 100 }, id = (int64)block, NotifyClicked = ButtonClicked };
+               eInstance_IncRef(block.window);
+               block.window.Create();
+               block.window.cursor = ((GuiApplication)__thisModule).GetCursor(arrow);
                break;
             case radio:
                block.window = Button { this, isRadio = true, position = Point { 10, 100 }, id = (int64)block, NotifyClicked = ButtonClicked };
@@ -438,7 +498,11 @@ class HTMLView : Window
                block.window.cursor = ((GuiApplication)__thisModule).GetCursor(arrow);
                break;
             case text:
-               block.window = EditBox { this, position = Point { 10, 20 }, id = (int64)block };
+               block.window = EditBox { this, contents = block.value, size = { w = (int)(block.size * 8) }, position = Point { 10, 20 }, id = (int64)block };
+               if(!block.size)
+               {
+                  ((EditBox)block.window).size.w = block.parent.width;
+               }
                eInstance_IncRef(block.window);
                block.window.Create();
                break;
@@ -458,7 +522,7 @@ class HTMLView : Window
       if(block.src && (block.type == IMAGE || block.type == TD || block.type == TABLE))
       {
          char path[MAX_LOCATION];
-         ImageEntry entry;
+         ImageEntry entry = null;
 
          strcpy(path, location ? location : "");
          if(location && path[strlen(path)-1] != '/')
@@ -471,9 +535,12 @@ class HTMLView : Window
          else
             PathCat(path, block.src);
 
-         for(entry = imageCache.first; entry; entry = entry.next)
-            if(!strcmp(entry.src, path))
-               break;
+         if(!strstr(path, "File://"))
+         {
+            for(entry = imageCache.first; entry; entry = entry.next)
+               if(!strcmp(entry.src, path))
+                  break;
+         }
 
          if(!entry)
          {
@@ -489,7 +556,7 @@ class HTMLView : Window
             block.bitmap = entry.bitmap;
          else
          {
-            if(path && strstr(path, "http://") == path)
+            if(path && (strstr(path, "http://") == path || strstr(path, "https://") == path))
             {
                RequestLink request;
                objectsMutex.Wait();
@@ -527,6 +594,9 @@ class HTMLView : Window
                   char extension[MAX_EXTENSION];
                   entry.bitmap = Bitmap { alphaBlend = true };
                   entry.bitmap.LoadFromFile(file, GetExtension(path, extension), null);
+                  display.Lock(false);
+                  entry.bitmap.MakeDD(displaySystem);
+                  display.Unlock();
                }
                delete file;
                for(bitmapPtr = entry.bitmapPtrs.first; bitmapPtr; bitmapPtr = bitmapPtr.next)
@@ -537,6 +607,7 @@ class HTMLView : Window
             }
          }
          block.font = block.parent.font;
+         block.textColor = block.parent.textColor;
       }
       else if(block.type == FONT || block.type == ANCHOR)
       {
@@ -553,50 +624,26 @@ class HTMLView : Window
          if(!entry)
          {
             display.Lock(false);
-            entry = FontEntry { /*font = displaySystem.LoadFont(block.face, block.size, block.attribs), */size = block.size, attribs = block.attribs, face = CopyString(block.face) };
+            entry = FontEntry { font = displaySystem.LoadFont(block.face, block.size, block.attribs), size = block.size, attribs = block.attribs, face = CopyString(block.face) };
             fontCache.Add(entry);
             display.Unlock();
          }
 
          if(entry)
-         {
-            // ?
             block.font = entry;
-         }
       }
       else if(block.parent)
+      {
          block.font = block.parent.font;
+         block.textColor = block.parent.textColor;
+      }
+      else
+      {
+         block.textColor = black;
+      }
 
       for(child = block.subBlocks.first; child; child = child.next)
          LoadGraphics(child, previous);
-   }
-
-   bool OnLoadGraphics()
-   {
-      ImageEntry entry;
-      FontEntry fEntry;
-      for(entry = imageCache.first; entry; entry = entry.next)
-      {
-         entry.bitmap.MakeDD(displaySystem);
-         if(entry.bitmap && entry.bitmap.alphaBlend)
-         {
-            entry.bitmap.Convert(null, pixelFormat888, null);
-            // entry.bitmap.displaySystem = displaySystem;
-         }
-      }
-      for(fEntry = fontCache.first; fEntry; fEntry = fEntry.next)
-         fEntry.font = browserWindow.displaySystem.LoadFont(fEntry.face, fEntry.size, fEntry.attribs);
-      return true;
-   }
-   
-   void OnUnloadGraphics()
-   {
-      FontEntry entry;
-      for(entry = fontCache.first; entry; entry = entry.next)
-      {
-         browserWindow.displaySystem.UnloadFont(entry.font);
-         entry.font = null;
-      }
    }
 
    void NormalizeSelection(Block * startBlock, int * startSel, Block * endBlock, int * endSel)
@@ -649,8 +696,11 @@ class HTMLView : Window
       Surface surface = display.GetSurface(0,0,null);
       if(surface)
       {
+         Font font;
          if(html.defaultFont.font)
             surface.TextFont(html.defaultFont.font.font);
+
+         font = surface.font;
          for(;block;)
          {
             Block nextBlock;
@@ -659,7 +709,6 @@ class HTMLView : Window
             int left, right;
             int x, maxW;
             int thisLineCentered = centered;
-            Font font = surface.GetFont();
             bool changeLine;
 
             left = LEFT_MARGIN;
@@ -685,12 +734,13 @@ class HTMLView : Window
             maxW = right - left;
 
             newH = ComputeLine(surface, block, textPos, &nextBlock, &nextTextPos, &centered, &w, maxW, maxH - y, RenderFlags {}, y, &leftObjects, &rightObjects, &changeLine, true, 0 /*y*/, LEFT_MARGIN);
+
             if(thisLineCentered)
                x = Max(left,(left + right - w) / 2);
             else
                x = left;
 
-            surface.TextFont(font);
+            surface.font = font;
 
             PositionLine(this, surface, x - scroll.x, y - scroll.y,
                maxW, newH, block, textPos, nextBlock, nextTextPos, 
@@ -786,9 +836,153 @@ class HTMLView : Window
 
       if(opened)
       {
+         bool isHTTP = eClass_IsDerived(f._class, class(HTTPFile));
          void * previous = null;
-         html.Parse(f);
+         bool isImage = false;
+         bool isPlain = isHTTP ? false : true;
+
+         // Handle known types
+         if(isHTTP && f.contentType)
+         {
+            if(strstr(f.contentType, "image/") == f.contentType)
+               isImage = true;
+            else if(strstr(f.contentType, "text/") == f.contentType && strnicmp(f.contentType + 5, "html", 4))
+               isPlain = true;
+         }
+         else
+         {
+            const String imageExt[] = { "jpg", "jpeg", "bmp", "pcx", "png", "gif" };
+            const String htmlExt[] = { "html", "htm", "php" };
+            const String textExt[] = { "c", "h", "ec", "eh", "epj", "cpp", "cxx", "cc", "hpp", "hxx", "hh", "m", "java", "cs", "py", "Makefile", "mk", "cf" };
+            char ext[MAX_EXTENSION];
+            int i;
+            GetExtension(fileName, ext);
+            for(i = 0; i < sizeof(imageExt) / sizeof(imageExt[0]); i++)
+               if(!strcmpi(ext, imageExt[i]))
+               {
+                  isImage = true;
+                  break;
+               }
+
+            for(i = 0; i < sizeof(htmlExt) / sizeof(htmlExt[0]); i++)
+               if(!strcmpi(ext, htmlExt[i]))
+               {
+                  isPlain = false;
+                  break;
+               }
+
+            for(i = 0; i < sizeof(textExt) / sizeof(textExt[0]); i++)
+               if(!strcmpi(ext, textExt[i]))
+               {
+                  isPlain = true;
+                  break;
+               }
+         }
+
+         if(isImage)
+         {
+            Block subBlock;
+            html.body = HTMLFile::AddBlock(html.block, BODY);
+
+            subBlock = HTMLFile::AddBlock(html.body, IMAGE);
+            subBlock.valign = bottom;
+            subBlock.halign = middle;
+            subBlock.src = CopyString(fileName);
+            html.defaultFont.type = FONT;
+            html.defaultFont.face = CopyString("Times New Roman");
+         }
+         else if(isPlain)
+         {
+            uint size;
+            TempFile tmp { };
+            Block subBlock;
+            char * text;
+            int len;
+            String cd = eClass_IsDerived(f._class, class(HTTPFile)) ? f.contentDisposition : null;
+
+            String tmpPath = PrintString("File://", (uintptr)tmp);
+            f.CopyTo(tmpPath);
+            size = tmp.GetSize();
+            tmp.Seek(0, start);
+
+            html.defaultFont.type = FONT;
+            html.defaultFont.face = CopyString("Courier New");
+
+            if(cd)
+            {
+               char fn[MAX_LOCATION];
+               while(GetKeyWordEx(&cd, fn, sizeof(fn), true, false))
+               {
+                  if(!strcmp(fn, "filename") && GetKeyWordEx(&cd, fn, sizeof(fn), true, true))
+                  {
+                     html.titleBlock = HTMLFile::AddBlock(html.block, TITLE);
+                     subBlock = HTMLFile::AddBlock(html.titleBlock, TEXT);
+                     subBlock.text = CopyString(fn);
+                     subBlock.textLen = strlen(fn);
+                  }
+               }
+            }
+
+            html.body = HTMLFile::AddBlock(html.block, BODY);
+            html.block = html.body;
+
+            text = new char[size + 1];
+            len = tmp.Read(text, 1, size);
+            text[len] = 0;
+
+            {
+               int c;
+               char ch;
+               int start = 0;
+               Block textBlock = HTMLFile::AddBlock(html.block, TEXT);
+
+               for(c = 0; ; c++)
+               {
+                  ch = text[c];
+                  if(ch == '\n' || ch == '\r' || !ch)
+                  {
+                     int len = c - start;
+                     textBlock.text = renew textBlock.text char[textBlock.textLen + 1 + len];
+                     memmove(textBlock.text + len, textBlock.text, textBlock.textLen + 1);
+                     memcpy(textBlock.text, text + start, len);
+                     textBlock.textLen += len;
+                     if(!ch) break;
+                     {
+                        Block block { type = BR, parent = textBlock.parent };
+                        Block newBlock { type = TEXT, parent = textBlock.parent };
+
+                        textBlock.parent.subBlocks.Insert(textBlock, block);
+                        textBlock.parent.subBlocks.Insert(block, newBlock);
+
+                        newBlock.textLen = 0;
+                        newBlock.text = new char[1];
+                        newBlock.text[0] = 0;
+
+                        textBlock = newBlock;
+                     }
+                     if(ch == '\r' && text[c+1] == '\n') c++;
+                     start = c + 1;
+                  }
+               }
+
+               html.block = html.block.parent;
+               delete text;
+            }
+            delete tmp;
+            delete tmpPath;
+
+         }
+         else
+         {
+            html.Parse(f);
+            if(html.baseHRef)
+            {
+               delete this.location;
+               this.location = CopyString(html.baseHRef);
+            }
+         }
          LoadGraphics(html.defaultFont, &previous);
+         html.block.font = html.defaultFont.font;
          LoadGraphics(html.block, &previous);
          CreateForms(html.block);
 
@@ -844,6 +1038,7 @@ class HTMLView : Window
          void * previous = null;
          html.Parse(f);
          LoadGraphics(html.defaultFont, &previous);
+         html.block.font = html.defaultFont.font;
          LoadGraphics(html.block, &previous);
          CreateForms(html.block);
 
@@ -972,6 +1167,7 @@ class HTMLView : Window
       int maxH = clientSize.h - BOTTOM_MARGIN;
       OldList leftObjects { };
       OldList rightObjects { };
+      Font font;
 
       AlignedObject object, nextObject;
       int h = 0;
@@ -994,7 +1190,6 @@ class HTMLView : Window
          int left, right;
          int x, maxW;
          int thisLineCentered = centered;
-         Font font = surface.GetFont();
          bool changeLine;
 
          left = LEFT_MARGIN;
@@ -1019,7 +1214,9 @@ class HTMLView : Window
          right = Max(left, right);
          maxW = right - left;
 
+         font = surface.font;
          newH = ComputeLine(surface, block, textPos, &nextBlock, &nextTextPos, &centered, &w, maxW, maxH - y, RenderFlags {}, y, &leftObjects, &rightObjects, &changeLine, false, 0, 0);
+         surface.font = font;
          if(thisLineCentered)
             x = Max(left,(left + right - w) / 2);
          else
@@ -1118,7 +1315,7 @@ class HTMLView : Window
             int left, right;
             int x, maxW;
             int thisLineCentered = centered;
-            Font font = surface.GetFont();
+            Font font = surface.font;
             bool changeLine;
 
             left = LEFT_MARGIN;
@@ -1149,7 +1346,7 @@ class HTMLView : Window
             else
                x = left;
 
-            surface.TextFont(font);
+            surface.font = font;
 
             if(PickLine(this, surface, x - scroll.x, y - scroll.y, 
                maxW, newH, block, textPos, nextBlock, nextTextPos, 
@@ -1168,6 +1365,17 @@ class HTMLView : Window
             textPos = nextTextPos;
          }
          delete surface;
+      }
+
+      for(object = leftObjects.last; object; object = nextObject)
+      {
+         nextObject = object.prev;
+         leftObjects.Delete(object);
+      }
+      for(object = rightObjects.last; object; object = nextObject)
+      {
+         nextObject = object.prev;
+         rightObjects.Delete(object);
       }
       return result;
    }
@@ -1361,21 +1569,7 @@ class HTMLView : Window
    {
       delete this.location;
 
-      {
-         ImageEntry entry;
-         FontEntry fontEntry;
-         while((entry = imageCache.first))
-         {
-            imageCache.Remove(entry);
-            delete entry;
-         }
-         while((fontEntry = fontCache.first))
-         {
-            fontCache.Remove(fontEntry);
-            delete fontEntry;
-         }
-         html.block.ClearEntries();
-      }
+      html.block.ClearEntries();
    }
 
    property char * location
@@ -1389,5 +1583,14 @@ class HTMLView : Window
             Open(location, null);
       }
       get { return location; }
+   }
+
+   property String title
+   {
+      get
+      {
+         String title = html.title;
+         return title ? title : location;
+      }
    }
 }

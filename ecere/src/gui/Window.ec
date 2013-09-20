@@ -4253,7 +4253,7 @@ private:
                guiApp.prevWindow = null;
 
                // Eventually fix this not to include captured?
-               if(!prevWindow.OnMouseLeave(*mods))
+               if(!trueWindow.IsDescendantOf(prevWindow) && !prevWindow.OnMouseLeave(*mods))
                   result = false;
             }
             if(result && trueWindow && !trueWindow.destroyed/* && trueWindow == window*/)
@@ -4733,7 +4733,7 @@ private:
 
             if(prevActiveWindow) incref prevActiveWindow;
             incref hotKeyWindow;
-            if(method == __ecereVMethodID___ecereNameSpace__ecere__gui__Window_OnKeyDown && !hotKeyWindow.style.nonClient)
+            if(method == __ecereVMethodID___ecereNameSpace__ecere__gui__Window_OnKeyDown && !hotKeyWindow.style.nonClient && !hotKeyWindow.inactive)
                if(!hotKeyWindow.ActivateEx(true, true, false, true, null, null))
                {
                   status = false;

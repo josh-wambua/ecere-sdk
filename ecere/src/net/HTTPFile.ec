@@ -4,6 +4,9 @@
 
 import "list"
 import "network"
+#ifndef ECERE_NOSSL
+import "SSLSocket"
+#endif
 
 class ConnectionsHolder
 {
@@ -84,12 +87,17 @@ static char * GetString(char * string, char * what, int count)
    return string + c;
 }
 
+#ifdef ECERE_NOSSL
 private class HTTPConnection : Socket
+#else
+private class HTTPConnection : SSLSocket
+#endif
 {
    class_no_expansion;
    char * server;
    int port;
    HTTPFile file;
+   bool secure;
 
    processAlone = true;
 
@@ -134,7 +142,7 @@ private class HTTPConnection : Socket
       while(!file.done)
       {
          bool gotEndLine = false;
-         for(c = 0; c<count-1; c++)
+         for(c = 0; c<(int)count-1; c++)
          {
             if(buffer[c] == '\r' && buffer[c+1] == '\n')
             {
@@ -157,8 +165,8 @@ private class HTTPConnection : Socket
             */
             
 #ifdef _DEBUG
-            /*fwrite(buffer, 1, c, stdout);
-            puts("");*/
+            fwrite(buffer, 1, c, stdout);
+            puts("");
 #endif
 
             if(!c)
@@ -185,6 +193,38 @@ private class HTTPConnection : Socket
                {
                   file.totalSize = atoi(string);
                   file.totalSizeSet = true;
+               }
+               else if(string = GetString((char *)buffer, "Content-Type: ", count))
+               {
+                  char * cr = strstr(string, "\r");
+                  char * lf = strstr(string, "\n");
+                  int len;
+                  if(cr)
+                     len = cr - string;
+                  else if(lf)
+                     len = lf - string;
+                  else
+                     len = strlen(string);
+
+                  file.contentType = new char[len+1];
+                  memcpy(file.contentType, string, len);
+                  file.contentType[len] = 0;
+               }
+               else if(string = GetString((char *)buffer, "Content-disposition: ", count))
+               {
+                  char * cr = strstr(string, "\r");
+                  char * lf = strstr(string, "\n");
+                  int len;
+                  if(cr)
+                     len = cr - string;
+                  else if(lf)
+                     len = lf - string;
+                  else
+                     len = strlen(string);
+
+                  file.contentDisposition = new char[len+1];
+                  memcpy(file.contentDisposition, string, len);
+                  file.contentDisposition[len] = 0;
                }
                else if(string = GetString((char *)buffer, "Connection: ", count))
                {
@@ -298,7 +338,23 @@ public:
       set { reuseConnection = value; }
       get { return reuseConnection; }
    }
+   property String contentType
+   {
+      get { return contentType; }
+   }
+   property String contentDisposition
+   {
+      get { return contentDisposition; }
+   }
+
    bool OpenURL(char * name, char * referer, char * relocation)
+   {
+      return RetrieveHead(name, referer, relocation, false);
+   }
+
+private:
+
+   bool RetrieveHead(char * name, char * referer, char * relocation, bool askBody)
    {
       bool result = false;
       String http, https;
@@ -307,6 +363,11 @@ public:
       if(http != name) http = null;
       https = http ? null : strstr(name, "https://"); if(https && https != name) https = null;
 
+      askedBody = askBody;
+
+      done = false;
+      delete contentType;
+      delete contentDisposition;
       // ::PrintLn("Opening ", name, " ", (uint64)this, " in thread ", GetCurrentThreadID(), "\n");
       if(this && (http || https))
       {
@@ -315,7 +376,7 @@ public:
          int len;
          char * serverStart = http ? ecere::net::GetString(name, "http://", 0) : ecere::net::GetString(name, "https://", 0);
          char * fileName = strstr(serverStart, "/");
-         int port = 80;
+         int port = https ? 443 : 80;
          char * colon;
          bool reuse = false;
          HTTPConnection connection = null;
@@ -372,7 +433,7 @@ public:
                connection = null;
                for(c : holder.connections)
                {
-                  if(!strcmpi(c.server, server) && c.port == port)
+                  if(!strcmpi(c.server, server) && c.port == port && c.secure == (https ? true : false))
                   {
                      if(!c.file && c.connected)
                      {
@@ -404,7 +465,12 @@ public:
          if(!connection)
          {
             char ipAddress[1024];
-            connection = HTTPConnection { };
+            connection = HTTPConnection
+            {
+#ifndef ECERE_NOSSL
+               autoEstablish = https ? true : false
+#endif
+            };
             incref connection;      // HTTPFile reference on success
             
             connection.file = this;
@@ -422,6 +488,7 @@ public:
 
                   connection.server = CopyString(server);
                   connection.port = port;
+                  connection.secure = https ? true : false;
 
                   //::PrintLn("Got connectionsMutex for ", name, " ", (uint64)this, " in thread ", GetCurrentThreadID());
                   holder.connections.Add(connection);
@@ -461,7 +528,7 @@ public:
             this.relocation = relocation;
             //openStarted = false;
                   
-            strcpy(msg, "GET /");
+            strcpy(msg, askBody ? "GET /" : "HEAD /");
 
             if(fileName)
             {
@@ -490,7 +557,7 @@ public:
             strcat(msg, server);
             strcat(msg, "\r\n");
             strcat(msg, "Accept-Charset: UTF-8\r\n");
-            strcat(msg, "Accept-Charset: ISO-8859-1\r\n");
+            //strcat(msg, "Accept-Charset: ISO-8859-1\r\n");
             strcat(msg, "Connection: Keep-Alive\r\n");
             if(referer)
             {
@@ -498,6 +565,12 @@ public:
                strcat(msg, referer);
                strcat(msg, "\r\n");
             }
+            /*else
+            {
+               strcat(msg, "Referer: ");
+               strcat(msg, server);
+               strcat(msg, "\r\n");
+            }*/
             strcat(msg, "\r\n");
             len = strlen(msg);
             
@@ -515,39 +588,49 @@ public:
 
             if(this.connection)
             {
+               if(name != location)
+               {
+                  delete location;
+                  location = CopyString(name);
+               }
                if(status == 200 || (!status && totalSizeSet))
                {
-                  this.connection.OnReceive = HTTPConnection::Read_OnReceive;
+                  if(askBody)
+                     this.connection.OnReceive = HTTPConnection::Read_OnReceive;
+
                   result = true;
                   connectionsMutex.Wait();
                }
                else
                {
-                  if(chunked)
+                  if(askBody)
                   {
-                     bool wait = false;
-                     this.connection.OnReceive = HTTPConnection::Read_OnReceive;
-                     while(!eof)
+                     if(chunked)
                      {
-                        if(!this.connection)
-                           eof = true;
-                        else
+                        bool wait = false;
+                        this.connection.OnReceive = HTTPConnection::Read_OnReceive;
+                        while(!eof)
                         {
-                           // First time check if we already have bytes, second time wait for an event
-                           this.connection.Process();
-                           wait = true;
+                           if(!this.connection)
+                              eof = true;
+                           else
+                           {
+                              // First time check if we already have bytes, second time wait for an event
+                              this.connection.Process();
+                              wait = true;
+                           }
                         }
                      }
-                  }
-                  else if(totalSizeSet)
-                  {
-                     done = false;
-                     this.connection.OnReceive = HTTPConnection::Read_OnReceive;
-                     while(this.connection && this.connection.connected && position < totalSize)
+                     else if(totalSizeSet)
                      {
-                        connection.Process();
-                        position += bufferCount;
-                        bufferCount = 0;
+                        done = false;
+                        this.connection.OnReceive = HTTPConnection::Read_OnReceive;
+                        while(this.connection && this.connection.connected && position < totalSize)
+                        {
+                           connection.Process();
+                           position += bufferCount;
+                           bufferCount = 0;
+                        }
                      }
                   }
                   
@@ -595,15 +678,16 @@ public:
       return result;
    }
 
-private:
-
    ~HTTPFile()
    {
+      delete location;
+      delete contentType;
+      delete contentDisposition;
       {
          connectionsMutex.Wait();
          if(connection)
          {
-            if(totalSizeSet)
+            if(totalSizeSet && askedBody)
             {
                done = false;
                this.connection.OnReceive = HTTPConnection::Read_OnReceive;
@@ -646,6 +730,14 @@ private:
       uint readSize = size * count;
       uint read = 0;
       bool wait = false;
+      Time lastTime = GetTime();
+
+      if(!askedBody)
+      {
+         askedBody = true;
+         if(!RetrieveHead(this.location, null, null, true))
+            return 0;
+      }
 
       if(totalSizeSet && position >= totalSize)
          eof = true;
@@ -658,10 +750,13 @@ private:
          
          if(numbytes)
          {
+            lastTime = GetTime();
             memcpy(buffer + read, this.buffer + bufferPos, numbytes);
             bufferPos += numbytes;
             position += numbytes;
             read += numbytes;
+
+            lastTime = GetTime();
 
             if(bufferPos > HTTPFILE_BUFFERSIZE / 2)
             {
@@ -681,7 +776,7 @@ private:
             {
                // First time check if we already have bytes, second time wait for an event
                connection.Process();
-               if(wait && bufferCount - bufferPos == 0)
+               if(wait && bufferCount - bufferPos == 0 && GetTime() - lastTime > 5)
                   eof = true;
                wait = true;
             }
@@ -715,6 +810,21 @@ private:
 
    bool Seek(int pos, FileSeekMode mode)
    {
+      if(mode == start && bufferPos == 0 && pos <= bufferCount & pos >= 0)
+      {
+         bufferPos = pos;
+         return true;
+      }
+      else if(mode == current && bufferPos == 0 && (position + pos) <= bufferCount & (position + pos) >= 0)
+      {
+         bufferPos = position + pos;
+         return true;
+      }
+      else if(mode == end && totalSizeSet && bufferPos == 0 && bufferCount == totalSize && (totalSize - pos) <= bufferCount & (totalSize - pos) >= 0)
+      {
+         bufferPos = totalSize - pos;
+         return true;
+      }
       return false;
    }
 
@@ -739,6 +849,8 @@ private:
    }
 private:
 
+   bool askedBody;
+
    HTTPConnection connection;
    uint position;
    bool done;
@@ -749,6 +861,7 @@ private:
    bool close;
    uint chunkSize;
    char * relocation;
+   String location;
 
    // Buffering...
    byte buffer[HTTPFILE_BUFFERSIZE];
@@ -756,6 +869,9 @@ private:
    uint bufferCount;
    bool aborted;
    bool totalSizeSet;
+
+   String contentType;
+   String contentDisposition;
 }
 
 public HTTPFile FileOpenURL(char * name)

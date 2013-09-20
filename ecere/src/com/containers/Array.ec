@@ -10,8 +10,8 @@ public class Array : Container
 
 public:
    T * array;
-   uint count;
-   uint minAllocSize;
+   uintsize count;
+   uintsize minAllocSize;
 
    ~Array()
    {
@@ -70,7 +70,7 @@ public:
       count++;
       return (IteratorPointer)(after ? (after + 1) : array);
 */
-      uint tsize = Tsize;
+      uintsize tsize = Tsize;
       byte * pos = ip ? ((byte *)ip + tsize) : (byte *)array;
       if(count+1 > minAllocSize)
       {
@@ -117,7 +117,7 @@ public:
 
    virtual int GetCount() { return count; }
 
-   property uint size
+   property uintsize size
    {
       get { return count; }
       set
@@ -127,13 +127,13 @@ public:
             if(value > minAllocSize)
                array = renew0 array T[value];
             else if(value > count)
-               memset(array + count, 0, (value - count) * Tsize);
+               memset(array + count, 0, (uint64)(value - count) * Tsize);
             count = value;
          }
       }
    }
 
-   property uint minAllocSize
+   property uintsize minAllocSize
    {
       get { return minAllocSize; }
       set

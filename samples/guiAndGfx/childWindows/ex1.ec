@@ -20,12 +20,18 @@ class Parent : Window
 {
    borderStyle = sizable;
    hasMaximize = true, hasMinimize = true, hasClose = true;
-   text = "Hello, Ex1!", position = { 10, 10 }, size = { 1000, 600 };
+   text = "Hello, Ex1!";
+   position = { 10, 10 };
+   size = { 1000, 600 };
+   hasMenuBar = true;
 
    BitmapResource bubbles { ":SoapBubbles.bmp", window = this, transparent = false };
 
    void OnRedraw(Surface surface)
    {
+      int c;
+      for(c = 0; c < 4; c ++)
+         printf("hey");
       surface.Tile(bubbles.bitmap, 0,0,clientSize.w,clientSize.h);
    }
 

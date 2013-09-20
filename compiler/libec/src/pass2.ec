@@ -2219,7 +2219,7 @@ static void ProcessExpression(Expression exp)
       {
          bool changeToPtr = false;
          bool noHead = false;
-         Type type = exp.member.exp.expType;
+         Type type = exp.member.exp ? exp.member.exp.expType : null;
          Specifier memberClassSpecifier = exp.member.member ? exp.member.member._class : null;
          if(exp.member.member) exp.member.member._class = null;
 
@@ -2725,7 +2725,7 @@ static void ProcessExpression(Expression exp)
          FreeSpecifier(memberClassSpecifier);
 
          // Just moved this at the end... How is it?
-         if(exp.type == memberExp || exp.type == pointerExp)
+         if(exp.member.exp && (exp.type == memberExp || exp.type == pointerExp))
          {
             exp.member.exp.usage.usageGet = true;
             exp.member.exp.usage.usageMember = true;

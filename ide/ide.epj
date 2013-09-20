@@ -44,15 +44,13 @@
          "Name" : "Debug",
          "Options" : {
             "Debug" : true,
-            "Optimization" : "None",
             "PreprocessorDefinitions" : [
                "_DEBUG"
             ],
             "Libraries" : [
                "ecere"
             ],
-            "Console" : true,
-            "FastMath" : false
+            "Console" : true
          }
       },
       {

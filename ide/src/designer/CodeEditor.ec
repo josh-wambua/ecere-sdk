@@ -31,13 +31,13 @@ SyntaxColorScheme colorScheme
 */
 
 // The new nice dark scheme -- so peaceful on my brain
-
+/*
 FontResource panelFont { $"Courier New", 10 };
 FontResource codeFont { $"Courier New", 10 };
-/*
+*/
 FontResource panelFont { $"Consolas", 12 };
 FontResource codeFont { $"Consolas", 12 };
-*/
+
 Color selectionColor = lightYellow;
 Color selectionText = Color { 30, 40, 50 };
 Color viewsBackground = Color { 30, 40, 50 };
