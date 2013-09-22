@@ -44,13 +44,13 @@ class MainForm : Window
 
    }
 
-   Button tabTst { tabButtons, checked = true, master = this, stayDown = true, size = { 70, 20 }, anchor = { right = 10 + 6 * 80 },         text = "Test",  id = (uint)testForm, NotifyClicked = NotifyClicked };
-   Button tabUnt { tabButtons, master = this, stayDown = true, size = { 70, 20 }, anchor = { right = 10 + 5 * 80 },         text = "Units",  id = (uint)untEditor, NotifyClicked = NotifyClicked };
-   Button tabFrm { tabButtons, master = this, stayDown = true, size = { 70, 20 }, anchor = { right = 10 + 4 * 80 }, text = "Forms",        id = (uint)frmEditor, NotifyClicked = NotifyClicked };
-   Button tabScl { tabButtons, master = this, stayDown = true, size = { 70, 20 }, anchor = { right = 10 + 3 * 80 }, text = "Sub-Classes",  id = (uint)sclEditor, NotifyClicked = NotifyClicked };
-   Button tabCls { tabButtons, master = this, stayDown = true, size = { 70, 20 }, anchor = { right = 10 + 2 * 80 }, text = "Classes",       id = (uint)clsEditor, NotifyClicked = NotifyClicked };
-   Button tabRes { tabButtons, master = this, stayDown = true, size = { 70, 20 }, anchor = { right = 10 + 1 * 80 }, text = "Restrictions",  id = (uint)rstEditor, NotifyClicked = NotifyClicked };
-   Button tabMed { tabButtons, master = this, stayDown = true, size = { 70, 20 }, anchor = { right = 10 + 0 * 80},  text = "Drugs",   id = (uint)medEditor, NotifyClicked = NotifyClicked };
+   Button tabTst { tabButtons, checked = true, master = this, stayDown = true, size = { 70, 20 }, anchor = { right = 10 + 6 * 80 },         text = "Test",  id = (int64)testForm, NotifyClicked = NotifyClicked };
+   Button tabUnt { tabButtons, master = this, stayDown = true, size = { 70, 20 }, anchor = { right = 10 + 5 * 80 },         text = "Units",  id = (int64)untEditor, NotifyClicked = NotifyClicked };
+   Button tabFrm { tabButtons, master = this, stayDown = true, size = { 70, 20 }, anchor = { right = 10 + 4 * 80 }, text = "Forms",        id = (int64)frmEditor, NotifyClicked = NotifyClicked };
+   Button tabScl { tabButtons, master = this, stayDown = true, size = { 70, 20 }, anchor = { right = 10 + 3 * 80 }, text = "Sub-Classes",  id = (int64)sclEditor, NotifyClicked = NotifyClicked };
+   Button tabCls { tabButtons, master = this, stayDown = true, size = { 70, 20 }, anchor = { right = 10 + 2 * 80 }, text = "Classes",       id = (int64)clsEditor, NotifyClicked = NotifyClicked };
+   Button tabRes { tabButtons, master = this, stayDown = true, size = { 70, 20 }, anchor = { right = 10 + 1 * 80 }, text = "Restrictions",  id = (int64)rstEditor, NotifyClicked = NotifyClicked };
+   Button tabMed { tabButtons, master = this, stayDown = true, size = { 70, 20 }, anchor = { right = 10 + 0 * 80},  text = "Drugs",   id = (int64)medEditor, NotifyClicked = NotifyClicked };
 }
 
 class RestrictionEditor : Window
