@@ -697,7 +697,6 @@ public:
          channel.Unserialize(right);
          if(right) { right.parent = this; }
 
-         // TODO: Precomp errors without extra brackets
          depth = ((BTNode)(this)).depthProp;
       }
       else

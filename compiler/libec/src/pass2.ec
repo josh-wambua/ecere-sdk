@@ -2599,13 +2599,15 @@ static void ProcessExpression(Expression exp)
                else
                {
                   // If it's a this pointer, replace by precomputed shortcut
+                  //if(thisPtr && (!exp.member.exp.expType || !exp.member.exp.expType.typedByReference))
                   if(thisPtr)
                   {
                      char pointerName[1024];
 
                      strcpy(pointerName, "__ecerePointer_");
                      FullClassNameCat(pointerName, type._class.registered.fullName, false);
-                     FreeIdentifier(exp.member.exp.identifier);
+                     if(exp.member.exp.identifier)
+                        FreeIdentifier(exp.member.exp.identifier);
                      exp.member.exp.identifier = MkIdentifier(pointerName);
                   }
                   // Otherwise, access the data the hard way

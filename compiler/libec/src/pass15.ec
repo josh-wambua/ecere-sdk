@@ -6897,7 +6897,11 @@ void ReplaceExpContents(Expression checkedExp, Expression newExp)
 
 void ApplyAnyObjectLogic(Expression e)
 {
+   char debugExpString[4096];
    Type destType = /*(e.destType && e.destType.kind == ellipsisType) ? ellipsisDestType : */e.destType;
+   debugExpString[0] = '\0';
+   PrintExpression(e, debugExpString);
+
    if(destType && (/*destType.classObjectType == ClassObjectType::typedObject || */destType.classObjectType == anyObject))
    {
       //if(e.destType && e.destType.kind == ellipsisType) usedEllipsis = true;
@@ -7184,6 +7188,11 @@ void ApplyAnyObjectLogic(Expression e)
             e.op.op = '*';
             e.op.exp1 = null;
             e.op.exp2 = MkExpCast(MkTypeName(specs, MkDeclaratorPointer(MkPointer(null, null), decl)), thisExp);
+
+            /*e.expType = { };
+            CopyTypeInto(e.expType, type);
+            e.expType.byReference = false;
+            e.expType.refCount = 1;*/
          }
          else
          {
@@ -7191,11 +7200,13 @@ void ApplyAnyObjectLogic(Expression e)
             e.cast.typeName = MkTypeName(specs, decl);
             e.cast.exp = thisExp;
             e.byReference = true;
+            /*e.expType = type;
+            type.refCount++;*/
          }
-         e.expType = type;
          e.destType = destType;
-         type.refCount++;
          destType.refCount++;
+         e.expType = type;
+         type.refCount++;
       }
    }
 }
@@ -8937,6 +8948,15 @@ void ProcessExpressionType(Expression exp)
                if(type && type.kind != ellipsisType)
                {
                   Type next = type.next;
+                  // Allow manually passing a class for typed object
+                  /*
+                  if(type.kind == classType && type.classObjectType == typedObject && e && !e.prev)
+                  {
+                     ProcessExpressionType(e);
+                     if(e.expType && (e.expType.kind == subClassType || (e.expType.kind == classType && e.expType._class && e.expType._class.registered && 
+                        eClass_IsDerived(e.expType._class.registered, eSystem_FindClass(privateModule, "ecere::com::Class")))))
+                        next = type;
+                  }*/
                   if(!type.refCount) FreeType(type);
                   type = next;
                }
@@ -9033,7 +9053,19 @@ void ProcessExpressionType(Expression exp)
       {
          Type type;
          Location oldyylloc = yylloc;
-         bool thisPtr = (exp.member.exp && exp.member.exp.type == identifierExp && !strcmp(exp.member.exp.identifier.string, "this"));
+         bool thisPtr = (exp.member.exp && exp.member.exp.type == identifierExp && !strcmp(exp.member.exp.identifier.string, "this");
+         Expression checkExp = exp.member.exp;
+         /*while(checkExp)
+         {
+            if(checkExp.type == castExp)
+               checkExp = checkExp.cast.exp;
+            else if(checkExp.type == bracketsExp)
+               checkExp = checkExp.list ? checkExp.list->first : null;
+            else
+               break;
+         }
+
+         thisPtr = (checkExp && checkExp.type == identifierExp && !strcmp(checkExp.identifier.string, "this"));*/
          exp.thisPtr = thisPtr;
 
          // DOING THIS LATER NOW...
@@ -11908,6 +11940,7 @@ static void ProcessFunction(FunctionDefinition function)
             {
                thisSymbol.type.classObjectType = ClassObjectType::typedObject;
                thisSymbol.type.byReference = type.byReference;
+               thisSymbol.type.typedByReference = type.byReference;
                /*
                thisSymbol = Symbol { string = CopyString("class") };
                function.body.compound.context.symbols.Add(thisSymbol);
