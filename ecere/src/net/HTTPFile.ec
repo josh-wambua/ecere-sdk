@@ -528,6 +528,7 @@ private:
             this.relocation = relocation;
             //openStarted = false;
                   
+            totalSizeSet = false;   // HEAD will sometimes give you 0!
             strcpy(msg, askBody ? "GET /" : "HEAD /");
 
             if(fileName)
