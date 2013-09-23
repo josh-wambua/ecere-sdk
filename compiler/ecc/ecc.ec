@@ -536,7 +536,7 @@ class CompilerApp : Application
             fileInput.Seek(0, start);
 
    #ifdef _DEBUG
-            // SetYydebug(true);
+             // SetYydebug(true);
    #endif
 
             // Predeclare all classes

@@ -94,9 +94,12 @@ bool NeedCast(Type type1, Type type2)
          case int64Type:
          case intPtrType:
          case intSizeType:
+         {
+            bool sign1 = type1.isSigned, sign2 = type2.isSigned;
             if(type1.passAsTemplate && !type2.passAsTemplate)
                return true;
             return type1.isSigned != type2.isSigned;
+         }
          case classType:
             return type1._class != type2._class;
          case pointerType:
@@ -7189,10 +7192,10 @@ void ApplyAnyObjectLogic(Expression e)
             e.op.exp1 = null;
             e.op.exp2 = MkExpCast(MkTypeName(specs, MkDeclaratorPointer(MkPointer(null, null), decl)), thisExp);
 
-            /*e.expType = { };
+            e.expType = { };
             CopyTypeInto(e.expType, type);
             e.expType.byReference = false;
-            e.expType.refCount = 1;*/
+            e.expType.refCount = 1;
          }
          else
          {
@@ -7200,13 +7203,13 @@ void ApplyAnyObjectLogic(Expression e)
             e.cast.typeName = MkTypeName(specs, decl);
             e.cast.exp = thisExp;
             e.byReference = true;
-            /*e.expType = type;
-            type.refCount++;*/
+            e.expType = type;
+            type.refCount++;
          }
          e.destType = destType;
          destType.refCount++;
-         e.expType = type;
-         type.refCount++;
+         /*e.expType = type;
+         type.refCount++;*/
       }
    }
 }
@@ -7897,7 +7900,7 @@ void ProcessExpressionType(Expression exp)
                   PrintType(exp.op.exp2.expType, type1String, false, true);
                   PrintType(type1, type2String, false, true);
                   ChangeCh(expString, '\n', ' ');
-                  Compiler_Warning($"incompatible expression %s (%s); expected %s\n", expString, type1String, type2String);
+                  Compiler_Warning($"incompatible  %s (%s); expected %s\n", expString, type1String, type2String);
                }
             }
 
@@ -7907,7 +7910,21 @@ void ProcessExpressionType(Expression exp)
                exp.op.exp2.destType = null;
             }
 
-            type2 = exp.op.exp2.expType;
+            if(exp.op.op == '-' && !exp.op.exp1 && exp.op.exp2.expType && !exp.op.exp2.expType.isSigned)
+            {
+               type2 = { };
+               type2.refCount = 1;
+               CopyTypeInto(type2, exp.op.exp2.expType);
+               type2.isSigned = true;
+            }
+            else if(exp.op.op == '~' && !exp.op.exp1 && exp.op.exp2.expType && (!exp.op.exp2.expType.isSigned || exp.op.exp2.expType.kind != intType))
+            {
+               type2 = { kind = intType };
+               type2.refCount = 1;
+               type2.isSigned = true;
+            }
+            else
+               type2 = exp.op.exp2.expType;
          }
 
          dummy.kind = voidType;
@@ -8523,16 +8540,18 @@ void ProcessExpressionType(Expression exp)
          if(exp.index.exp.expType)
          {
             Type source = exp.index.exp.expType;
-            if(source.kind == classType && source._class && source._class.registered && source._class.registered != containerClass &&
-               eClass_IsDerived(source._class.registered, containerClass) && 
-               source._class.registered.templateArgs)
+            if(source.kind == classType && source._class && source._class.registered)
             {
                Class _class = source._class.registered;
-               exp.expType = ProcessTypeString(_class.templateArgs[2].dataTypeString, false);
-
-               if(exp.index.index && exp.index.index->last)
+               Class c = _class.templateClass ? _class.templateClass : _class;
+               if(_class != containerClass && eClass_IsDerived(c, containerClass) && _class.templateArgs)
                {
-                  ((Expression)exp.index.index->last).destType = ProcessTypeString(_class.templateArgs[1].dataTypeString, false);
+                  exp.expType = ProcessTypeString(_class.templateArgs[2].dataTypeString, false);
+
+                  if(exp.index.index && exp.index.index->last)
+                  {
+                     ((Expression)exp.index.index->last).destType = ProcessTypeString(_class.templateArgs[1].dataTypeString, false);
+                  }
                }
             }
          }
@@ -8841,15 +8860,31 @@ void ProcessExpressionType(Expression exp)
                }
                else if(!memberExp && (functionType.thisClass || (methodType && methodType.methodClass)))
                {
-                  type = MkClassType(functionType.thisClass ? functionType.thisClass.string : (methodType ? methodType.methodClass.fullName : null));
-                  if(e)
+                  bool advance = true;
+                  bool dontDoThis = false;
+                  // Handle #141  ( unrelated this classes: warning: not enough arguments for method SearchBox::NotifyUpdate (2 given, expected 1) )
+                  if(functionType.thisClass && functionType.thisClass.registered && methodType && methodType.methodClass)
                   {
-                     e.destType = type;
-                     e = e.next;
-                     type = functionType.params.first;
+                     if(functionType.thisClass.registered == methodType.methodClass || !eClass_IsDerived(functionType.thisClass.registered, methodType.methodClass))
+                        dontDoThis = true;
                   }
-                  else
-                     type.refCount = 0;
+                  if(!dontDoThis)
+                  {
+                     type = MkClassType(functionType.thisClass ? functionType.thisClass.string : (methodType ? methodType.methodClass.fullName : null));
+                     type.byReference = functionType.byReference;
+                     type.typedByReference = functionType.typedByReference;
+                     if(e)
+                     {
+                        // Allow manually passing a class for typed object
+                        if(type.kind == classType && (functionType && functionType.thisClass) && functionType.classObjectType == typedObject)
+                           e = e.next;
+                        e.destType = type;
+                        e = e.next;
+                        type = functionType.params.first;
+                     }
+                     else
+                        type.refCount = 0;
+                  }
                   //extra = 1;
                }
             }
@@ -8948,15 +8983,6 @@ void ProcessExpressionType(Expression exp)
                if(type && type.kind != ellipsisType)
                {
                   Type next = type.next;
-                  // Allow manually passing a class for typed object
-                  /*
-                  if(type.kind == classType && type.classObjectType == typedObject && e && !e.prev)
-                  {
-                     ProcessExpressionType(e);
-                     if(e.expType && (e.expType.kind == subClassType || (e.expType.kind == classType && e.expType._class && e.expType._class.registered && 
-                        eClass_IsDerived(e.expType._class.registered, eSystem_FindClass(privateModule, "ecere::com::Class")))))
-                        next = type;
-                  }*/
                   if(!type.refCount) FreeType(type);
                   type = next;
                }
@@ -9053,9 +9079,9 @@ void ProcessExpressionType(Expression exp)
       {
          Type type;
          Location oldyylloc = yylloc;
-         bool thisPtr = (exp.member.exp && exp.member.exp.type == identifierExp && !strcmp(exp.member.exp.identifier.string, "this");
+         bool thisPtr;// = (exp.member.exp && exp.member.exp.type == identifierExp && !strcmp(exp.member.exp.identifier.string, "this");
          Expression checkExp = exp.member.exp;
-         /*while(checkExp)
+         while(checkExp)
          {
             if(checkExp.type == castExp)
                checkExp = checkExp.cast.exp;
@@ -9065,7 +9091,7 @@ void ProcessExpressionType(Expression exp)
                break;
          }
 
-         thisPtr = (checkExp && checkExp.type == identifierExp && !strcmp(checkExp.identifier.string, "this"));*/
+         thisPtr = (checkExp && checkExp.type == identifierExp && !strcmp(checkExp.identifier.string, "this"));
          exp.thisPtr = thisPtr;
 
          // DOING THIS LATER NOW...

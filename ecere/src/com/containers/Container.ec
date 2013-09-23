@@ -167,7 +167,7 @@ public:
    {
       IteratorPointer i;
       Class Dclass = class(D);
-      if((Dclass.type == systemClass || Dclass.type == bitClass || Dclass.type == enumClass || Dclass.type == unitClass))
+      if(((Dclass.type == systemClass && !Dclass.byValueSystemClass) || Dclass.type == bitClass || Dclass.type == enumClass || Dclass.type == unitClass))
       {
          for(i = GetFirst(); i; i = GetNext(i))
          {
@@ -231,7 +231,7 @@ public:
             itemString[0] = '\0';
             
             result = ((char *(*)(void *, void *, char *, void *, bool *))(void *)Dclass._vTbl[__ecereVMethodID_class_OnGetString])(Dclass,
-               (Dclass.type == systemClass || Dclass.type == bitClass || Dclass.type == enumClass || Dclass.type == unitClass) ? &data : (void *)data, itemString, null, null);
+               ((Dclass.type == systemClass && !Dclass.byValueSystemClass) || Dclass.type == bitClass || Dclass.type == enumClass || Dclass.type == unitClass) ? &data : (void *)data, itemString, null, null);
             if(!first) strcat(tempString, ", ");
 
             strcat(tempString, result);         
@@ -259,13 +259,15 @@ public:
       uint count = GetCount();
       IteratorPointer i;
       Class Dclass = class(D);
+      bool isNormalClass = Dclass.type == normalClass;
 
       channel.Put(count);
       for(i = GetFirst(); i; i = GetNext(i))
       {
          D data = GetData(i);
-         ((void (*)(void *, void *, void *))(void *)Dclass._vTbl[__ecereVMethodID_class_OnSerialize])(Dclass, 
-            (Dclass.type == systemClass || Dclass.type == bitClass || Dclass.type == enumClass || Dclass.type == unitClass) ? &data : (void *)data, channel);
+         Class Eclass = isNormalClass ? ((Instance)data)._class : Dclass;
+         ((void (*)(void *, void *, void *))(void *)Eclass._vTbl[__ecereVMethodID_class_OnSerialize])(Eclass, 
+            ((Dclass.type == systemClass && !Dclass.byValueSystemClass) || Dclass.type == bitClass || Dclass.type == enumClass || Dclass.type == unitClass) ? &data : (void *)data, channel);
       }
    }
 

@@ -296,7 +296,7 @@ class Explorer : Window
 
 class BrowserApp : GuiApplication
 {
-   driver = "OpenGL";
+   //driver = "OpenGL";
    Explorer explorerWindow {};
 
    bool Init()

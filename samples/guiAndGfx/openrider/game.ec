@@ -72,7 +72,6 @@ class GameBall : GameVehicle {
 	double angle;
 	double angle_velocity;
 
-   //I didn't use OnSerialize because calling Put() on a GameBall would call GameVehicle's OnSerialize rather than GameBall's
    void OnSerialize(IOChannel channel)
    {
       GameVehicle::OnSerialize(channel);
@@ -82,7 +81,6 @@ class GameBall : GameVehicle {
       channel.Put(angle_velocity);
    }
 
-   //I didn't use OnUnserialize because of compiler errors with the this pointer (clearly a major eC bug)
    void OnUnserialize(IOChannel channel)
    {
       this = GameBall { };
@@ -278,37 +276,18 @@ public:
 
    void OnUnserialize(IOChannel channel)
    {
-      uint lsize,vsize;
-
       FreeAll();
 
       channel.Get(gravity);
-
-      channel.Get(lsize);
-      lines.size = lsize;
-      for (i:lines)
-         channel.Get(i);
-
-      channel.Get(vsize);
-      vehicles.size = vsize;
-      for (i:vehicles)
-         channel.Get(i);
+      channel.Get(lines);
+      channel.Get(vehicles);
    }
 
    void OnSerialize(IOChannel channel)
    {
-      uint lsize = lines.size;
-      uint vsize = vehicles.size;
-
       channel.Put(gravity);
-
-      channel.Put(lsize);
-      for (i:lines)
-         channel.Put(i);
-      
-      channel.Put(vsize);
-      for (i:vehicles)
-         channel.Put(i);
+      channel.Put(lines);
+      channel.Put(vehicles);
    }
 
    void Init(void) {

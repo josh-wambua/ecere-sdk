@@ -4,6 +4,8 @@ import "ecdefs"
 #include "grammar.h"
 extern char * yytext;
 
+//class List;
+
 char * defaultNameSpace;
 int defaultNameSpaceLen;
 public void SetDefaultNameSpace(char * s) { defaultNameSpace = s; defaultNameSpaceLen = s ? strlen(s) : 0; }
@@ -271,7 +273,7 @@ public struct ContextStringPair
    }
 };
 
-Map<ContextStringPair, List<Location> > intlStrings { };
+Map<ContextStringPair, List<Location>> intlStrings { };
 
 Expression MkExpIntlString(char * string, char * context)
 {
@@ -2359,6 +2361,7 @@ static Type ProcessTypeSpecs(OldList specs, bool assumeEllipsis, bool keepTypeNa
                Symbol symbol = spec.name ? FindType(curContext, spec.name) : null;
                if(symbol && symbol.type)
                {
+                  bool s = symbol.type.isSigned;
                   // Free Type Contents:
                   Type dummy { };
                   *dummy = *specType;
