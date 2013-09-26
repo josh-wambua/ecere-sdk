@@ -377,7 +377,7 @@ for(i = ((struct __ecereNameSpace__ecere__com__IteratorPointer * (*)(struct __ec
 {
 uint64 data = ((uint64 (*)(struct __ecereNameSpace__ecere__com__BuiltInContainer *, struct __ecereNameSpace__ecere__com__IteratorPointer * pointer))__ecereClass___ecereNameSpace__ecere__com__BuiltInContainer->_vTbl[__ecereVMethodID___ecereNameSpace__ecere__com__BuiltInContainer_GetData])(this, i);
 struct __ecereNameSpace__ecere__com__Class * Dclass = this->type;
-int result = ((int (*)(void *, void *, void *))(void *)Dclass->_vTbl[__ecereVMethodID_class_OnCompare])(Dclass, (Dclass->type == 1000 || Dclass->type == 2 || Dclass->type == 4 || Dclass->type == 3) ? &value : (void *)value, (Dclass->type == 1000 || Dclass->type == 2 || Dclass->type == 4 || Dclass->type == 3) ? &data : (void *)data);
+int result = ((int (*)(void *, void *, void *))(void *)Dclass->_vTbl[__ecereVMethodID_class_OnCompare])(Dclass, ((Dclass->type == 1000 && !Dclass->byValueSystemClass) || Dclass->type == 2 || Dclass->type == 4 || Dclass->type == 3) ? &value : (void *)value, ((Dclass->type == 1000 && !Dclass->byValueSystemClass) || Dclass->type == 2 || Dclass->type == 4 || Dclass->type == 3) ? &data : (void *)data);
 
 if(!result)
 return i;

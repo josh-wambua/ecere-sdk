@@ -535,7 +535,7 @@ struct __ecereNameSpace__ecere__com__IteratorPointer * __ecereMethod___ecereName
 struct __ecereNameSpace__ecere__com__IteratorPointer * i;
 struct __ecereNameSpace__ecere__com__Class * Dclass = ((struct __ecereNameSpace__ecere__com__Instance *)(char *)this)->_class->templateArgs[2].dataTypeClass;
 
-if((Dclass->type == 1000 || Dclass->type == 2 || Dclass->type == 4 || Dclass->type == 3))
+if(((Dclass->type == 1000 && !Dclass->byValueSystemClass) || Dclass->type == 2 || Dclass->type == 4 || Dclass->type == 3))
 {
 for(i = ((struct __ecereNameSpace__ecere__com__IteratorPointer * (*)(struct __ecereNameSpace__ecere__com__Instance *))this->_vTbl[__ecereVMethodID___ecereNameSpace__ecere__com__Container_GetFirst])(this); i; i = ((struct __ecereNameSpace__ecere__com__IteratorPointer * (*)(struct __ecereNameSpace__ecere__com__Instance *, struct __ecereNameSpace__ecere__com__IteratorPointer * pointer))this->_vTbl[__ecereVMethodID___ecereNameSpace__ecere__com__Container_GetNext])(this, i))
 {
@@ -608,7 +608,7 @@ uint64 data = ((uint64 (*)(struct __ecereNameSpace__ecere__com__Instance *, stru
 char * result;
 
 itemString[0] = '\0';
-result = ((char * (*)(void *, void *, char *, void *, unsigned int *))(void *)Dclass->_vTbl[__ecereVMethodID_class_OnGetString])(Dclass, (Dclass->type == 1000 || Dclass->type == 2 || Dclass->type == 4 || Dclass->type == 3) ? ((char *)&data + __ENDIAN_PAD((class->templateArgs[2].dataTypeClass->type == 1 || class->templateArgs[2].dataTypeClass->type == 0 || class->templateArgs[2].dataTypeClass->type == 5) ? sizeof(void *) : class->templateArgs[2].dataTypeClass->typeSize)) : (void *)data, itemString, (((void *)0)), (((void *)0)));
+result = ((char * (*)(void *, void *, char *, void *, unsigned int *))(void *)Dclass->_vTbl[__ecereVMethodID_class_OnGetString])(Dclass, ((Dclass->type == 1000 && !Dclass->byValueSystemClass) || Dclass->type == 2 || Dclass->type == 4 || Dclass->type == 3) ? ((char *)&data + __ENDIAN_PAD((class->templateArgs[2].dataTypeClass->type == 1 || class->templateArgs[2].dataTypeClass->type == 0 || class->templateArgs[2].dataTypeClass->type == 5) ? sizeof(void *) : class->templateArgs[2].dataTypeClass->typeSize)) : (void *)data, itemString, (((void *)0)), (((void *)0)));
 if(!first)
 strcat(tempString, ", ");
 strcat(tempString, result);
@@ -639,13 +639,15 @@ void __ecereMethod___ecereNameSpace__ecere__com__Container_OnSerialize(struct __
 unsigned int count = ((int (*)(struct __ecereNameSpace__ecere__com__Instance *))(this)->_vTbl[__ecereVMethodID___ecereNameSpace__ecere__com__Container_GetCount])(this);
 struct __ecereNameSpace__ecere__com__IteratorPointer * i;
 struct __ecereNameSpace__ecere__com__Class * Dclass = class->templateArgs[2].dataTypeClass;
+unsigned int isNormalClass = Dclass->type == 0;
 
 __ecereMethod___ecereNameSpace__ecere__com__IOChannel_Put(channel, __ecereClass_uint, &count);
 for(i = ((struct __ecereNameSpace__ecere__com__IteratorPointer * (*)(struct __ecereNameSpace__ecere__com__Instance *))(this)->_vTbl[__ecereVMethodID___ecereNameSpace__ecere__com__Container_GetFirst])(this); i; i = ((struct __ecereNameSpace__ecere__com__IteratorPointer * (*)(struct __ecereNameSpace__ecere__com__Instance *, struct __ecereNameSpace__ecere__com__IteratorPointer * pointer))(this)->_vTbl[__ecereVMethodID___ecereNameSpace__ecere__com__Container_GetNext])(this, i))
 {
 uint64 data = ((uint64 (*)(struct __ecereNameSpace__ecere__com__Instance *, struct __ecereNameSpace__ecere__com__IteratorPointer * pointer))(this)->_vTbl[__ecereVMethodID___ecereNameSpace__ecere__com__Container_GetData])(this, i);
+struct __ecereNameSpace__ecere__com__Class * Eclass = isNormalClass ? ((struct __ecereNameSpace__ecere__com__Instance *)(char *)((struct __ecereNameSpace__ecere__com__Instance *)data))->_class : Dclass;
 
-((void (*)(void *, void *, void *))(void *)Dclass->_vTbl[__ecereVMethodID_class_OnSerialize])(Dclass, (Dclass->type == 1000 || Dclass->type == 2 || Dclass->type == 4 || Dclass->type == 3) ? ((char *)&data + __ENDIAN_PAD((class->templateArgs[2].dataTypeClass->type == 1 || class->templateArgs[2].dataTypeClass->type == 0 || class->templateArgs[2].dataTypeClass->type == 5) ? sizeof(void *) : class->templateArgs[2].dataTypeClass->typeSize)) : (void *)data, channel);
+((void (*)(void *, void *, void *))(void *)Eclass->_vTbl[__ecereVMethodID_class_OnSerialize])(Eclass, ((Dclass->type == 1000 && !Dclass->byValueSystemClass) || Dclass->type == 2 || Dclass->type == 4 || Dclass->type == 3) ? ((char *)&data + __ENDIAN_PAD((class->templateArgs[2].dataTypeClass->type == 1 || class->templateArgs[2].dataTypeClass->type == 0 || class->templateArgs[2].dataTypeClass->type == 5) ? sizeof(void *) : class->templateArgs[2].dataTypeClass->typeSize)) : (void *)data, channel);
 }
 }
 

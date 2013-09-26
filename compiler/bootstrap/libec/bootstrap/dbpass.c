@@ -1389,6 +1389,7 @@ __ecereInstance1->parent = databaseOpenStmt->compound.context, __ecereInstance1;
 });
 sprintf(numIndexesString, "%d", numIndexes);
 __ecereMethod___ecereNameSpace__ecere__sys__OldList_Add((&*ifDBStmt->compound.declarations), MkDeclaration(MkListOne(MkSpecifierName("FieldIndex")), MkListOne(MkInitDeclarator(MkDeclaratorArray(MkDeclaratorIdentifier(MkIdentifier("indexes")), MkExpConstant(numIndexesString)), MkInitializerList(MkListOne(MkInitializerList(MkListOne(MkInitializerAssignment(MkExpIdentifier(MkIdentifier("null")))))))))));
+__ecereMethod___ecereNameSpace__ecere__sys__OldList_Add((&*ifDBStmt->compound.statements), MkExpressionStmt(MkListOne(MkExpCall(MkExpMember(MkExpIdentifier(MkIdentifier("db")), MkIdentifier("Begin")), MkList()))));
 __ecereMethod___ecereNameSpace__ecere__sys__OldList_Add((&*ifDBStmt->compound.statements), compound = MkCompoundStmt((((void *)0)), tableStatements));
 compound->compound.context = __extension__ ({
 struct Context * __ecereInstance1 = __ecereNameSpace__ecere__com__eInstance_New(__ecereClass_Context);
@@ -1406,6 +1407,7 @@ struct Context * __ecereInstance1 = __ecereNameSpace__ecere__com__eInstance_New(
 
 __ecereInstance1->parent = ifDBStmt->compound.context, __ecereInstance1;
 });
+__ecereMethod___ecereNameSpace__ecere__sys__OldList_Add((&*ifDBStmt->compound.statements), MkExpressionStmt(MkListOne(MkExpCall(MkExpMember(MkExpIdentifier(MkIdentifier("db")), MkIdentifier("Commit")), MkList()))));
 exp->type = 25;
 exp->compound = databaseOpenStmt;
 __ecereMethod___ecereNameSpace__ecere__sys__OldList_Add((&*databaseOpenStmt->compound.statements), MkExpressionStmt(MkListOne(MkExpIdentifier(MkIdentifier("db")))));
@@ -1809,6 +1811,8 @@ ProcessClassDef(def);
 }
 }
 
+static int curSymbolID = 0;
+
 extern struct External * MkExternalDeclaration(struct Declaration * declaration);
 
 extern struct __ecereNameSpace__ecere__sys__OldList *  ast;
@@ -1882,7 +1886,7 @@ char tableID[1024];
 char nameField[1024];
 struct __ecereNameSpace__ecere__sys__OldList * args;
 struct __ecereNameSpace__ecere__sys__OldList * members;
-int symbolID = 0;
+int symbolID = curSymbolID;
 
 if(table->symbol)
 idClassDefs = MkList();
@@ -2238,6 +2242,9 @@ if(ast != (((void *)0)))
 for(external = (*ast).first; external; external = external->next)
 {
 curExternal = external;
+if(external->symbol)
+curSymbolID = external->symbol->idCode;
+addAfter = external->prev;
 switch(external->type)
 {
 case 5:
@@ -2248,6 +2255,9 @@ break;
 for(external = (*ast).first; external; external = external->next)
 {
 curExternal = external;
+if(external->symbol)
+curSymbolID = external->symbol->idCode;
+addAfter = external->prev;
 switch(external->type)
 {
 case 0:

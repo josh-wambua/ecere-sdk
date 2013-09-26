@@ -94,12 +94,9 @@ bool NeedCast(Type type1, Type type2)
          case int64Type:
          case intPtrType:
          case intSizeType:
-         {
-            bool sign1 = type1.isSigned, sign2 = type2.isSigned;
             if(type1.passAsTemplate && !type2.passAsTemplate)
                return true;
             return type1.isSigned != type2.isSigned;
-         }
          case classType:
             return type1._class != type2._class;
          case pointerType:
@@ -3990,7 +3987,7 @@ bool MatchTypeExpression(Expression sourceExp, Type dest, OldList conversions, b
    static bool name(Expression exp, Operand op1)                \
    {                                                              \
       exp.type = constantExp;                                    \
-      exp.string = p(o op1.m);                                   \
+      exp.string = p((t)(o op1.m));                                   \
       if(!exp.expType) \
          { exp.expType = op1.type; if(op1.type) op1.type.refCount++; } \
       return true;                                                \
@@ -5757,6 +5754,9 @@ void ComputeExpression(Expression exp)
                FullClassNameCat(className, classSym.string, true);
                MangleClassName(className);
 
+               // TOFIX: TESTING THIS...
+               DeclareClass(classSym, className);
+
                FreeExpContents(exp);
                exp.type = pointerExp;
                exp.member.exp = MkExpIdentifier(MkIdentifier(className));
@@ -6900,10 +6900,12 @@ void ReplaceExpContents(Expression checkedExp, Expression newExp)
 
 void ApplyAnyObjectLogic(Expression e)
 {
-   char debugExpString[4096];
    Type destType = /*(e.destType && e.destType.kind == ellipsisType) ? ellipsisDestType : */e.destType;
+#ifdef _DEBUG
+   char debugExpString[4096];
    debugExpString[0] = '\0';
    PrintExpression(e, debugExpString);
+#endif
 
    if(destType && (/*destType.classObjectType == ClassObjectType::typedObject || */destType.classObjectType == anyObject))
    {
@@ -7900,7 +7902,7 @@ void ProcessExpressionType(Expression exp)
                   PrintType(exp.op.exp2.expType, type1String, false, true);
                   PrintType(type1, type2String, false, true);
                   ChangeCh(expString, '\n', ' ');
-                  Compiler_Warning($"incompatible  %s (%s); expected %s\n", expString, type1String, type2String);
+                  Compiler_Warning($"incompatible expression %s (%s); expected %s\n", expString, type1String, type2String);
                }
             }
 
@@ -8860,12 +8862,13 @@ void ProcessExpressionType(Expression exp)
                }
                else if(!memberExp && (functionType.thisClass || (methodType && methodType.methodClass)))
                {
-                  bool advance = true;
                   bool dontDoThis = false;
+
                   // Handle #141  ( unrelated this classes: warning: not enough arguments for method SearchBox::NotifyUpdate (2 given, expected 1) )
                   if(functionType.thisClass && functionType.thisClass.registered && methodType && methodType.methodClass)
                   {
-                     if(functionType.thisClass.registered == methodType.methodClass || !eClass_IsDerived(functionType.thisClass.registered, methodType.methodClass))
+                     if(functionType.extraParam &&
+                        (functionType.thisClass.registered == methodType.methodClass || !eClass_IsDerived(functionType.thisClass.registered, methodType.methodClass)))
                         dontDoThis = true;
                   }
                   if(!dontDoThis)

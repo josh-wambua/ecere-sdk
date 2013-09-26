@@ -16,6 +16,7 @@
          "Name" : "Debug",
          "Options" : {
             "Debug" : true,
+            "NoLineNumbers" : true,
             "PreprocessorDefinitions" : [
                "_DEBUG"
             ],

@@ -6192,7 +6192,7 @@ return 0x1;
 static unsigned int IntNeg(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintInt(-op1->i);
+exp->string = PrintInt((-op1->i));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6205,7 +6205,7 @@ return 0x1;
 static unsigned int UIntNeg(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintUInt(-op1->ui);
+exp->string = PrintUInt((unsigned int)(-op1->ui));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6218,7 +6218,7 @@ return 0x1;
 static unsigned int ShortNeg(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintShort(-op1->s);
+exp->string = PrintShort((-op1->s));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6231,7 +6231,7 @@ return 0x1;
 static unsigned int UShortNeg(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintUShort(-op1->us);
+exp->string = PrintUShort((unsigned short)(-op1->us));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6244,7 +6244,7 @@ return 0x1;
 static unsigned int CharNeg(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintChar(-op1->c);
+exp->string = PrintChar((-op1->c));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6257,7 +6257,7 @@ return 0x1;
 static unsigned int UCharNeg(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintUChar(-op1->uc);
+exp->string = PrintUChar((unsigned char)(-op1->uc));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6270,7 +6270,7 @@ return 0x1;
 static unsigned int FloatNeg(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintFloat(-op1->f);
+exp->string = PrintFloat((float)(-op1->f));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6283,7 +6283,7 @@ return 0x1;
 static unsigned int DoubleNeg(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintDouble(-op1->d);
+exp->string = PrintDouble((double)(-op1->d));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6296,7 +6296,7 @@ return 0x1;
 static unsigned int IntInc(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintInt(++op1->i);
+exp->string = PrintInt((++op1->i));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6309,7 +6309,7 @@ return 0x1;
 static unsigned int UIntInc(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintUInt(++op1->ui);
+exp->string = PrintUInt((++op1->ui));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6322,7 +6322,7 @@ return 0x1;
 static unsigned int ShortInc(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintShort(++op1->s);
+exp->string = PrintShort((++op1->s));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6335,7 +6335,7 @@ return 0x1;
 static unsigned int UShortInc(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintUShort(++op1->us);
+exp->string = PrintUShort((++op1->us));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6348,7 +6348,7 @@ return 0x1;
 static unsigned int CharInc(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintChar(++op1->c);
+exp->string = PrintChar((++op1->c));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6361,7 +6361,7 @@ return 0x1;
 static unsigned int UCharInc(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintUChar(++op1->uc);
+exp->string = PrintUChar((++op1->uc));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6374,7 +6374,7 @@ return 0x1;
 static unsigned int FloatInc(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintFloat(++op1->f);
+exp->string = PrintFloat((float)(++op1->f));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6387,7 +6387,7 @@ return 0x1;
 static unsigned int DoubleInc(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintDouble(++op1->d);
+exp->string = PrintDouble((double)(++op1->d));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6400,7 +6400,7 @@ return 0x1;
 static unsigned int IntDec(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintInt(--op1->i);
+exp->string = PrintInt((--op1->i));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6413,7 +6413,7 @@ return 0x1;
 static unsigned int UIntDec(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintUInt(--op1->ui);
+exp->string = PrintUInt((--op1->ui));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6426,7 +6426,7 @@ return 0x1;
 static unsigned int ShortDec(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintShort(--op1->s);
+exp->string = PrintShort((--op1->s));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6439,7 +6439,7 @@ return 0x1;
 static unsigned int UShortDec(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintUShort(--op1->us);
+exp->string = PrintUShort((--op1->us));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6452,7 +6452,7 @@ return 0x1;
 static unsigned int CharDec(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintChar(--op1->c);
+exp->string = PrintChar((--op1->c));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6465,7 +6465,7 @@ return 0x1;
 static unsigned int UCharDec(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintUChar(--op1->uc);
+exp->string = PrintUChar((--op1->uc));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6478,7 +6478,7 @@ return 0x1;
 static unsigned int FloatDec(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintFloat(--op1->f);
+exp->string = PrintFloat((float)(--op1->f));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6491,7 +6491,7 @@ return 0x1;
 static unsigned int DoubleDec(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintDouble(--op1->d);
+exp->string = PrintDouble((double)(--op1->d));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7644,7 +7644,7 @@ return 0x1;
 static unsigned int IntBitNot(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintInt(~op1->i);
+exp->string = PrintInt((~op1->i));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7657,7 +7657,7 @@ return 0x1;
 static unsigned int UIntBitNot(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintUInt(~op1->ui);
+exp->string = PrintUInt((unsigned int)(~op1->ui));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7670,7 +7670,7 @@ return 0x1;
 static unsigned int ShortBitNot(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintShort(~op1->s);
+exp->string = PrintShort((short)(~op1->s));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7683,7 +7683,7 @@ return 0x1;
 static unsigned int UShortBitNot(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintUShort(~op1->us);
+exp->string = PrintUShort((unsigned short)(~op1->us));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7696,7 +7696,7 @@ return 0x1;
 static unsigned int CharBitNot(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintChar(~op1->c);
+exp->string = PrintChar((char)(~op1->c));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7709,7 +7709,7 @@ return 0x1;
 static unsigned int UCharBitNot(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintUChar(~op1->uc);
+exp->string = PrintUChar((unsigned char)(~op1->uc));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8172,7 +8172,7 @@ return 0x1;
 static unsigned int IntNot(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintInt(!op1->i);
+exp->string = PrintInt((int)(!op1->i));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8185,7 +8185,7 @@ return 0x1;
 static unsigned int UIntNot(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintUInt(!op1->ui);
+exp->string = PrintUInt((unsigned int)(!op1->ui));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8198,7 +8198,7 @@ return 0x1;
 static unsigned int ShortNot(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintShort(!op1->s);
+exp->string = PrintShort((short)(!op1->s));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8211,7 +8211,7 @@ return 0x1;
 static unsigned int UShortNot(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintUShort(!op1->us);
+exp->string = PrintUShort((unsigned short)(!op1->us));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8224,7 +8224,7 @@ return 0x1;
 static unsigned int CharNot(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintChar(!op1->c);
+exp->string = PrintChar((char)(!op1->c));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8237,7 +8237,7 @@ return 0x1;
 static unsigned int UCharNot(struct Expression * exp, struct Operand * op1)
 {
 exp->type = 2;
-exp->string = PrintUChar(!op1->uc);
+exp->string = PrintUChar((unsigned char)(!op1->uc));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10855,6 +10855,7 @@ char className[1024];
 strcpy(className, "__ecereClass_");
 FullClassNameCat(className, classSym->string, 0x1);
 MangleClassName(className);
+DeclareClass(classSym, className);
 FreeExpContents(exp);
 exp->type = 9;
 exp->member.exp = MkExpIdentifier(MkIdentifier(className));
@@ -12282,6 +12283,10 @@ e->type = 4;
 e->op.op = '*';
 e->op.exp1 = (((void *)0));
 e->op.exp2 = MkExpCast(MkTypeName(specs, MkDeclaratorPointer(MkPointer((((void *)0)), (((void *)0))), decl)), thisExp);
+e->expType = __ecereNameSpace__ecere__com__eInstance_New(__ecereClass_Type);
+CopyTypeInto(e->expType, type);
+e->expType->byReference = 0x0;
+e->expType->refCount = 1;
 }
 else
 {
@@ -12289,10 +12294,10 @@ e->type = 11;
 e->cast.typeName = MkTypeName(specs, decl);
 e->cast.exp = thisExp;
 e->byReference = 0x1;
-}
 e->expType = type;
-e->destType = destType;
 type->refCount++;
+}
+e->destType = destType;
 destType->refCount++;
 }
 }
@@ -12919,6 +12924,24 @@ if(exp->op.exp2->destType == dummy)
 FreeType(dummy);
 exp->op.exp2->destType = (((void *)0));
 }
+if(exp->op.op == '-' && !exp->op.exp1 && exp->op.exp2->expType && !exp->op.exp2->expType->isSigned)
+{
+type2 = __ecereNameSpace__ecere__com__eInstance_New(__ecereClass_Type);
+type2->refCount = 1;
+CopyTypeInto(type2, exp->op.exp2->expType);
+type2->isSigned = 0x1;
+}
+else if(exp->op.op == '~' && !exp->op.exp1 && exp->op.exp2->expType && (!exp->op.exp2->expType->isSigned || exp->op.exp2->expType->kind != 3))
+{
+type2 = __extension__ ({
+struct Type * __ecereInstance1 = __ecereNameSpace__ecere__com__eInstance_New(__ecereClass_Type);
+
+__ecereInstance1->kind = 3, __ecereInstance1;
+});
+type2->refCount = 1;
+type2->isSigned = 0x1;
+}
+else
 type2 = exp->op.exp2->expType;
 }
 dummy->kind = 0;
@@ -13429,14 +13452,18 @@ if(exp->index.exp->expType)
 {
 struct Type * source = exp->index.exp->expType;
 
-if(source->kind == 8 && source->_class && source->_class->registered && source->_class->registered != containerClass && __ecereNameSpace__ecere__com__eClass_IsDerived(source->_class->registered, containerClass) && source->_class->registered->templateArgs)
+if(source->kind == 8 && source->_class && source->_class->registered)
 {
 struct __ecereNameSpace__ecere__com__Class * _class = source->_class->registered;
+struct __ecereNameSpace__ecere__com__Class * c = _class->templateClass ? _class->templateClass : _class;
 
+if(_class != containerClass && __ecereNameSpace__ecere__com__eClass_IsDerived(c, containerClass) && _class->templateArgs)
+{
 exp->expType = ProcessTypeString(_class->templateArgs[2].dataTypeString, 0x0);
 if(exp->index.index && (*exp->index.index).last)
 {
 ((struct Expression *)(*exp->index.index).last)->destType = ProcessTypeString(_class->templateArgs[1].dataTypeString, 0x0);
+}
 }
 }
 }
@@ -13701,15 +13728,29 @@ type->refCount = 0;
 }
 else if(!memberExp && (functionType->thisClass || (methodType && methodType->methodClass)))
 {
+unsigned int dontDoThis = 0x0;
+
+if(functionType->thisClass && functionType->thisClass->registered && methodType && methodType->methodClass)
+{
+if(functionType->extraParam && (functionType->thisClass->registered == methodType->methodClass || !__ecereNameSpace__ecere__com__eClass_IsDerived(functionType->thisClass->registered, methodType->methodClass)))
+dontDoThis = 0x1;
+}
+if(!dontDoThis)
+{
 type = MkClassType(functionType->thisClass ? functionType->thisClass->string : (methodType ? methodType->methodClass->fullName : (((void *)0))));
+type->byReference = functionType->byReference;
+type->typedByReference = functionType->typedByReference;
 if(e)
 {
+if(type->kind == 8 && (functionType && functionType->thisClass) && functionType->classObjectType == 2)
+e = e->next;
 e->destType = type;
 e = e->next;
 type = functionType->params.first;
 }
 else
 type->refCount = 0;
+}
 }
 }
 if(type && type->kind == 0)
@@ -13898,8 +13939,19 @@ case 8:
 {
 struct Type * type;
 struct Location oldyylloc = yylloc;
-unsigned int thisPtr = (exp->member.exp && exp->member.exp->type == 0 && !strcmp(exp->member.exp->identifier->string, "this"));
+unsigned int thisPtr;
+struct Expression * checkExp = exp->member.exp;
 
+while(checkExp)
+{
+if(checkExp->type == 11)
+checkExp = checkExp->cast.exp;
+else if(checkExp->type == 5)
+checkExp = checkExp->list ? (*checkExp->list).first : (((void *)0));
+else
+break;
+}
+thisPtr = (checkExp && checkExp->type == 0 && !strcmp(checkExp->identifier->string, "this"));
 exp->thisPtr = thisPtr;
 if(exp->member.member && exp->member.member->_class && exp->member.member->_class->name)
 {
@@ -16462,6 +16514,7 @@ if(typedObject && thisSymbol->type)
 {
 thisSymbol->type->classObjectType = 2;
 thisSymbol->type->byReference = type->byReference;
+thisSymbol->type->typedByReference = type->byReference;
 }
 }
 }

@@ -2361,7 +2361,6 @@ static Type ProcessTypeSpecs(OldList specs, bool assumeEllipsis, bool keepTypeNa
                Symbol symbol = spec.name ? FindType(curContext, spec.name) : null;
                if(symbol && symbol.type)
                {
-                  bool s = symbol.type.isSigned;
                   // Free Type Contents:
                   Type dummy { };
                   *dummy = *specType;

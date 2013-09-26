@@ -595,6 +595,7 @@ __ecereClass___ecereNameSpace__ecere__sys__PipeOpenMode = class;
 __ecereNameSpace__ecere__com__eClass_AddBitMember(class, "output", "bool", 1, 0, 1);
 __ecereNameSpace__ecere__com__eClass_AddBitMember(class, "error", "bool", 1, 1, 1);
 __ecereNameSpace__ecere__com__eClass_AddBitMember(class, "input", "bool", 1, 2, 1);
+__ecereNameSpace__ecere__com__eClass_AddBitMember(class, "showWindow", "bool", 1, 3, 1);
 class = __ecereNameSpace__ecere__com__eSystem_RegisterClass(0, "ecere::sys::DualPipe", "ecere::sys::File", sizeof(struct __ecereNameSpace__ecere__sys__DualPipe), 0, 0, __ecereDestructor___ecereNameSpace__ecere__sys__DualPipe, module, 1, 1);
 if(((struct __ecereNameSpace__ecere__com__Module *)(((char *)module + structSize_Instance)))->application == ((struct __ecereNameSpace__ecere__com__Module *)(((char *)__thisModule + structSize_Instance)))->application && class)
 __ecereClass___ecereNameSpace__ecere__sys__DualPipe = class;

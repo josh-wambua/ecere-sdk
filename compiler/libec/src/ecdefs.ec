@@ -1162,7 +1162,7 @@ public:
    bool constant:1;
    bool truth:1;
    bool byReference:1;
-   bool extraParam:1;
+   bool extraParam:1;      // Clarify this... One thing it is used for is adaptive method with their own type explicitly specified
    bool directClassAccess:1;     // Need to clarify this if this had the same intended purpose as declaredWithStruct
    bool computing:1;
    bool keepCast:1;
