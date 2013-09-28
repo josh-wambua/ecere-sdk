@@ -1,6 +1,6 @@
-namespace gfx;
-
 import "Display"
+
+namespace gfx;
 
 #include <stdarg.h>
 

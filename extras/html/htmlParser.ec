@@ -114,7 +114,7 @@ String ParseURL(String input)
       {
          char hex[3] = { input[c+1], input[c+2], 0 };
          char * end;
-         int v = strtoul(hex, &end, 16);
+         int v = (int)strtoul(hex, &end, 16);
          if(v && end == hex + 2)
          {
             output[len++] = (char)v;

@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-import "list"
+import "List"
 import "network"
 #ifndef ECERE_NOSSL
 import "SSLSocket"
