@@ -1438,9 +1438,9 @@ extern int strcmp(const char * , const char * );
 
 extern char *  strncpy(char * , const char * , size_t n);
 
-static void __ecereNameSpace__ecere__com__FreeTemplatesDerivatives(struct __ecereNameSpace__ecere__com__Class * base);
-
 extern int printf(char * , ...);
+
+static void __ecereNameSpace__ecere__com__FreeTemplatesDerivatives(struct __ecereNameSpace__ecere__com__Class * base);
 
 static void __ecereNameSpace__ecere__com__NameSpace_Free(struct __ecereNameSpace__ecere__com__NameSpace * parentNameSpace);
 
@@ -1605,7 +1605,6 @@ offsetClass = base ? base->sizeClass : (type == 5 ? 0 : 0);
 totalSizeClass = offsetClass + sizeClass;
 if((_class = __ecereNameSpace__ecere__com__eSystem_FindClass(module, name)))
 {
-__ecereNameSpace__ecere__com__FreeTemplatesDerivatives(_class);
 if(!_class->internalDecl)
 {
 if(declMode != 4)
@@ -1617,6 +1616,7 @@ return _class;
 }
 return (((void *)0));
 }
+__ecereNameSpace__ecere__com__FreeTemplatesDerivatives(_class);
 classLink = (struct __ecereNameSpace__ecere__com__BTNamedLink *)__ecereMethod___ecereNameSpace__ecere__sys__BinaryTree_FindString(&(*_class->nameSpace).classes, name + start);
 __ecereMethod___ecereNameSpace__ecere__sys__BinaryTree_Delete(&(*_class->nameSpace).classes, (struct __ecereNameSpace__ecere__sys__BTNode *)classLink);
 {
@@ -3235,7 +3235,7 @@ __ecereNameSpace__ecere__com__FixDerivativeVirtualMethod(template, name, vid, or
 
 struct __ecereNameSpace__ecere__com__Method * __ecereNameSpace__ecere__com__eClass_AddMethod(struct __ecereNameSpace__ecere__com__Class * _class, char * name, char * type, void * function, int declMode)
 {
-if(_class && name)
+if(_class && !_class->comRedefinition && name)
 {
 struct __ecereNameSpace__ecere__com__Class * base;
 
@@ -3303,7 +3303,7 @@ return (((void *)0));
 
 struct __ecereNameSpace__ecere__com__Method * __ecereNameSpace__ecere__com__eClass_AddVirtualMethod(struct __ecereNameSpace__ecere__com__Class * _class, char * name, char * type, void * function, int declMode)
 {
-if(_class && name)
+if(_class && !_class->comRedefinition && name)
 {
 struct __ecereNameSpace__ecere__com__Class * base;
 

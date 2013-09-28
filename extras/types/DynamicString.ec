@@ -1,3 +1,5 @@
+public import "ecere"
+
 #include <stdarg.h>
 
 extern int isblank(int c);

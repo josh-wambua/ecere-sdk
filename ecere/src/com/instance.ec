@@ -2384,8 +2384,6 @@ public dllexport Class eSystem_RegisterClass(ClassType type, char * name, char *
    
       if((_class = eSystem_FindClass(module, name)))
       {
-         FreeTemplatesDerivatives(_class);
-
          if(!_class.internalDecl)
          {
             if(declMode != baseSystemAccess)
@@ -2398,6 +2396,8 @@ public dllexport Class eSystem_RegisterClass(ClassType type, char * name, char *
             }
             return null;
          }
+
+         FreeTemplatesDerivatives(_class);
 
          classLink = (BTNamedLink)_class.nameSpace->classes.FindString(name + start);
          _class.nameSpace->classes.Delete((BTNode)classLink);
@@ -4019,7 +4019,7 @@ static void FixDerivativeVirtualMethod(Class base, char * name, int vid, void * 
 
 public dllexport Method eClass_AddMethod(Class _class, char * name, char * type, void * function, AccessMode declMode)
 {
-   if(_class && name)
+   if(_class && !_class.comRedefinition && name)
    {
       Class base;
       for(base = _class; base; base = base.base)
@@ -4090,7 +4090,7 @@ public dllexport Method eClass_AddMethod(Class _class, char * name, char * type,
 
 public dllexport Method eClass_AddVirtualMethod(Class _class, char * name, char * type, void * function, AccessMode declMode)
 {
-   if(_class && name)
+   if(_class && !_class.comRedefinition && name)
    {
       Class base;
       for(base = _class; base; base = base.base)
