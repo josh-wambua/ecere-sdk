@@ -273,31 +273,40 @@ void DebugComputeExpression(Expression exp)
          switch(evalError)
          {
             case dummyExp:
-               //expNew = ParseExpressionString(evaluation);
-               expNew = MkExpConstant(evaluation);
-               //printf("Evaluation = %s\n", evaluation);
-               delete evaluation;
-               expNew.destType = exp.expType;
-
-               // WHY EXACTLY MUST WE PROCESS THIS EXPRESSION TYPE AGAIN ? ADDED THIS FOR 0x00000000
-               if(exp.expType && exp.expType.kind == pointerType && expNew.destType)
+               if(evaluation)
                {
-                  expNew.expType = expNew.destType;
-                  expNew.destType.refCount++;
+                  //expNew = ParseExpressionString(evaluation);
+                  expNew = MkExpConstant(evaluation);
+                  //printf("Evaluation = %s\n", evaluation);
+                  delete evaluation;
+                  expNew.destType = exp.expType;
+
+                  // WHY EXACTLY MUST WE PROCESS THIS EXPRESSION TYPE AGAIN ? ADDED THIS FOR 0x00000000
+                  if(exp.expType && (exp.expType.kind == pointerType || exp.expType.kind == classType) && expNew.destType)
+                  {
+                     expNew.expType = expNew.destType;
+                     expNew.destType.refCount++;
+                  }
+                  else
+                     ProcessExpressionType(expNew);
+                  FreeType(exp.destType);
+                  FreeExpContents(exp);
+
+                  DebugComputeExpression(expNew);
+                  expNew.prev = prev;
+                  expNew.next = next;
+                  expNew.isConstant = true;
+                  expNew.address = address;
+                  expNew.hasAddress = hasAddress;
+                  *exp = *expNew;
+                  delete expNew;
                }
                else
-                  ProcessExpressionType(expNew);
-               FreeType(exp.destType);
-               FreeExpContents(exp);
-
-               DebugComputeExpression(expNew);
-               expNew.prev = prev;
-               expNew.next = next;
-               expNew.isConstant = true;
-               expNew.address = address;
-               expNew.hasAddress = hasAddress;
-               *exp = *expNew;
-               delete expNew;
+               {
+                  // Unhandled code path, evaluation is null
+                  FreeExpContents(exp);
+                  exp.type = unknownErrorExp;
+               }
                break;
             case symbolErrorExp:
                // Keep the identifier
@@ -471,20 +480,29 @@ void DebugComputeExpression(Expression exp)
                            switch(evalError)
                            {
                               case dummyExp:
-                                 expNew = ParseExpressionString(evaluation);
-                                 expNew.address = address;
-                                 expNew.hasAddress = true;
-                                 delete evaluation;
-                                 expNew.destType = exp.expType;
-                                 FreeType(exp.destType);
-                                 FreeExpContents(exp);
-                                 ProcessExpressionType(expNew);
-                                 DebugComputeExpression(expNew);
-                                 expNew.prev = prev;
-                                 expNew.next = next;
-                                 expNew.isConstant = true;
-                                 *exp = *expNew;
-                                 delete expNew;
+                                 if(evaluation)
+                                 {
+                                    expNew = ParseExpressionString(evaluation);
+                                    expNew.address = address;
+                                    expNew.hasAddress = true;
+                                    delete evaluation;
+                                    expNew.destType = exp.expType;
+                                    FreeType(exp.destType);
+                                    FreeExpContents(exp);
+                                    ProcessExpressionType(expNew);
+                                    DebugComputeExpression(expNew);
+                                    expNew.prev = prev;
+                                    expNew.next = next;
+                                    expNew.isConstant = true;
+                                    *exp = *expNew;
+                                    delete expNew;
+                                 }
+                                 else
+                                 {
+                                    // Unhandled code path, evaluation is null
+                                    FreeExpContents(exp);
+                                    exp.type = unknownErrorExp;
+                                 }
                                  break;
                               case memoryErrorExp:
                                  delete evaluation;
@@ -649,23 +667,32 @@ void DebugComputeExpression(Expression exp)
                   switch(evalError)
                   {
                      case dummyExp:
-                        expNew = ParseExpressionString(evaluation);
-                        delete evaluation;
-                        expNew.destType = exp.expType;
-                        FreeType(exp.destType);
-                        FreeExpContents(exp);
-                        ProcessExpressionType(expNew);
-                        DebugComputeExpression(expNew);
+                        if(evaluation)
+                        {
+                           expNew = ParseExpressionString(evaluation);
+                           delete evaluation;
+                           expNew.destType = exp.expType;
+                           FreeType(exp.destType);
+                           FreeExpContents(exp);
+                           ProcessExpressionType(expNew);
+                           DebugComputeExpression(expNew);
 
-                        // TOFIX: Only for Array Types
-                        expNew.address = address;
+                           // TOFIX: Only for Array Types
+                           expNew.address = address;
 
-                        expNew.hasAddress = true;
-                        expNew.prev = prev;
-                        expNew.next = next;
-                        expNew.isConstant = true;
-                        *exp = *expNew;
-                        delete expNew;
+                           expNew.hasAddress = true;
+                           expNew.prev = prev;
+                           expNew.next = next;
+                           expNew.isConstant = true;
+                           *exp = *expNew;
+                           delete expNew;
+                        }
+                        else
+                        {
+                           // Unhandled code path, evaluation is null
+                           FreeExpContents(exp);
+                           exp.type = unknownErrorExp;
+                        }
                         break;
                      case memoryErrorExp:
                         delete evaluation;
