@@ -13,6 +13,23 @@ static void CarryExpressionError(Expression exp, Expression expError)
 
    *temp = *expError;
 
+   // -- Careful: this could be problematic as FreeExpContents will free the contents of expError
+   // Nulling things that may be freed now, but this is all overly messy/complex
+   switch(expError.type)
+   {
+      case symbolErrorExp:
+         expError.identifier = null;
+         break;
+      case memoryErrorExp:
+         expError.constant = null;
+         break;
+      case dereferenceErrorExp:
+      case classMemberSymbolErrorExp:
+         expError.member.exp = null;
+         expError.member.member = null;
+         break;
+   }
+
    /*
    Identifier identifier = expError.identifier;
    expError.identifier = null;
@@ -20,6 +37,8 @@ static void CarryExpressionError(Expression exp, Expression expError)
    exp.identifier = identifier;
    exp.type = expError.type;
    */
+   if(exp.expType) FreeType(exp.expType);
+   if(exp.destType) FreeType(exp.destType);
    FreeExpContents(exp);
    *exp = *temp; //*expError;
    delete temp;
@@ -189,11 +208,6 @@ void DebugComputeExpression(Expression exp)
                      eString_TrimRSpaces(evaluation, evaluation);
                   */}
                }
-               else
-               {
-                  exp.type = evalError;
-                  exp.constant = PrintHexUInt64(address);
-               }
                break;
             case shortType:
             case intType:
@@ -218,11 +232,6 @@ void DebugComputeExpression(Expression exp)
                      evaluation = PrintHexUInt64(value);
                   }
                }
-               else
-               {
-                  exp.constant = CopyString("");
-                  exp.type = evalError;
-               }
                break;
             case classType:
                if(isPointer)
@@ -243,7 +252,6 @@ void DebugComputeExpression(Expression exp)
             case functionType:
                //evaluation = Debugger::EvaluateExpression(exp.identifier.string, &evalError);
                delete evaluation;
-               evaluation = null;
                break;
             case arrayType:
             {
@@ -260,24 +268,11 @@ void DebugComputeExpression(Expression exp)
             case dummyType:
                delete evaluation;
                evaluation = Debugger::EvaluateExpression(exp.identifier.string, &evalError);
-               if(evaluation)
-                  ;
-               else
-               {
-                  exp.constant = CopyString("");
-                  exp.type = evalError;
-               }
                break;
          }
-         if(evalError != dummyExp)
+         switch(evalError)
          {
-            exp.type = evalError;
-            exp.constant = CopyString("");
-         }
-         else
-         {
-            if(evaluation)
-            {
+            case dummyExp:
                //expNew = ParseExpressionString(evaluation);
                expNew = MkExpConstant(evaluation);
                //printf("Evaluation = %s\n", evaluation);
@@ -302,17 +297,17 @@ void DebugComputeExpression(Expression exp)
                expNew.address = address;
                expNew.hasAddress = hasAddress;
                *exp = *expNew;
-            }
-            else
-            {
-               exp.address = address;
-               exp.hasAddress = hasAddress;
-               //exp.type = ExpUnknownError;
-            }
+               delete expNew;
+               break;
+            case symbolErrorExp:
+               // Keep the identifier
+               exp.type = evalError;
+               break;
+            default:
+               FreeExpContents(exp);
+               exp.type = evalError;
+               break;
          }
-         //else
-         //   exp.type = ExpUnknownError;
-
          break;
       }
       case instanceExp:
@@ -362,6 +357,7 @@ void DebugComputeExpression(Expression exp)
                      expNew.next = next;
                      expNew.isConstant = true;
                      *exp = *expNew;
+                     delete expNew;
                   }
                   else
                      exp.type = ExpUnknownError;
@@ -456,6 +452,7 @@ void DebugComputeExpression(Expression exp)
                            expNew.next = next;
                            expNew.isConstant = true;
                            *exp = *expNew;
+                           delete expNew;
                         }
                         else
                            exp1.address = 0;
@@ -471,16 +468,9 @@ void DebugComputeExpression(Expression exp)
                         if(format)
                         {
                            evaluation = Debugger::ReadMemory(address, size, format, &evalError);
-                           if(evalError != dummyExp)
+                           switch(evalError)
                            {
-                              exp1.type = evalError;
-                              exp1.constant = PrintHexUInt64(address);
-                              expError = exp1;
-                           }
-                           else
-                           {
-                              if(evaluation)
-                              {
+                              case dummyExp:
                                  expNew = ParseExpressionString(evaluation);
                                  expNew.address = address;
                                  expNew.hasAddress = true;
@@ -494,16 +484,27 @@ void DebugComputeExpression(Expression exp)
                                  expNew.next = next;
                                  expNew.isConstant = true;
                                  *exp = *expNew;
-                              }
-                              else
-                              {
-                                 exp1.type = unknownErrorExp;
+                                 delete expNew;
+                                 break;
+                              case memoryErrorExp:
+                                 delete evaluation;
+                                 FreeExpContents(exp1);
+                                 exp1.type = evalError;
+                                 exp1.constant = PrintHexUInt64(address);
                                  expError = exp1;
-                              }
+                                 break;
+                              default:
+                                 delete evaluation;
+                                 FreeExpContents(exp1);
+                                 exp1.type = evalError;
+                                 expError = exp1;
+                                 break;
+
                            }
                         }
                         else
                         {
+                           FreeExpContents(exp1);
                            exp1.type = unknownErrorExp;  // Not supported yet, generate error to fallback to GDB printout
                            expError = exp1;
                         }
@@ -624,6 +625,8 @@ void DebugComputeExpression(Expression exp)
             }
             if(!ExpressionIsError(exp))
             {
+               // Is this necessary here? pass15 had done this already...
+               if(exp.expType) FreeType(exp.expType);
                exp.expType = Dereference(exp.index.exp.expType);
 
                if(exp.index.index && exp.index.index->last && ((Expression)exp.index.index->last) && ((Expression)exp.index.index->last).expType &&
@@ -643,36 +646,39 @@ void DebugComputeExpression(Expression exp)
                   //size = ComputeTypeSize(exp.expType.arrayType); //exp.expType.arrayType.size;
                   address += offset * size;
                   evaluation = Debugger::ReadMemory(address, size, format, &evalError);
-                  if(evalError != dummyExp)
+                  switch(evalError)
                   {
-                     exp.type = evalError;
-                     exp.constant = CopyString("");
+                     case dummyExp:
+                        expNew = ParseExpressionString(evaluation);
+                        delete evaluation;
+                        expNew.destType = exp.expType;
+                        FreeType(exp.destType);
+                        FreeExpContents(exp);
+                        ProcessExpressionType(expNew);
+                        DebugComputeExpression(expNew);
+
+                        // TOFIX: Only for Array Types
+                        expNew.address = address;
+
+                        expNew.hasAddress = true;
+                        expNew.prev = prev;
+                        expNew.next = next;
+                        expNew.isConstant = true;
+                        *exp = *expNew;
+                        delete expNew;
+                        break;
+                     case memoryErrorExp:
+                        delete evaluation;
+                        FreeExpContents(exp);
+                        exp.type = evalError;
+                        exp.constant = PrintHexUInt64(address);
+                        break;
+                     default:
+                        delete evaluation;
+                        FreeExpContents(exp);
+                        exp.type = evalError;
+                        break;
                   }
-                  else if(evaluation)
-                  {
-                     expNew = ParseExpressionString(evaluation);
-                     delete evaluation;
-                     expNew.destType = exp.expType;
-                     FreeType(exp.destType);
-                     FreeExpContents(exp);
-                     ProcessExpressionType(expNew);
-                     DebugComputeExpression(expNew);
-
-                     // TOFIX: Only for Array Types
-                     expNew.address = address;
-
-                     expNew.hasAddress = true;
-                     expNew.prev = prev;
-                     expNew.next = next;
-                     expNew.isConstant = true;
-                     *exp = *expNew;
-                  }
-                  else
-                     exp.type = unknownErrorExp;
-
-                  //FreeExpContents(exp);
-                  //exp.constant = PrintUInt64(value);
-                  //exp.type = constantExp;
                }
             }
          }
@@ -1104,6 +1110,7 @@ void DebugComputeExpression(Expression exp)
                                  expNew.address = address;
                                  expNew.hasAddress = true;
                                  *exp = *expNew;
+                                 delete expNew;
                               }
                               else
                                  exp.type = unknownErrorExp;
@@ -1188,12 +1195,15 @@ void DebugComputeExpression(Expression exp)
                               expNew.address = address;
                               expNew.hasAddress = true;
                               *exp = *expNew;
+                              delete expNew;
                            }
                            else
                               exp.type = unknownErrorExp;
                         }
                         else
                         {
+                           FreeExpContents(exp);
+
                            // TESTING THIS HERE...
                            exp.type = constantExp;
                            exp.constant = PrintHexUInt64(address);

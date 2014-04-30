@@ -1617,6 +1617,25 @@ case 27:
 if(exp->classData.id)
 FreeIdentifier(exp->classData.id);
 break;
+case 18:
+if(exp->identifier)
+FreeIdentifier(exp->identifier);
+break;
+case 21:
+(__ecereNameSpace__ecere__com__eSystem_Delete(exp->constant), exp->constant = 0);
+break;
+case 17:
+case 19:
+if(exp->member.exp)
+FreeExpression(exp->member.exp);
+if(exp->member.member)
+FreeIdentifier(exp->member.member);
+break;
+case 20:
+case 24:
+case 22:
+case 23:
+break;
 }
 if(freePointer)
 {

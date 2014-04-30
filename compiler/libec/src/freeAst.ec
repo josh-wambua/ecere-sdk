@@ -503,6 +503,25 @@ static void _FreeExpression(Expression exp, bool freePointer)
          if(exp.classData.id)
             FreeIdentifier(exp.classData.id);
             break;
+      case symbolErrorExp:
+         if(exp.identifier)
+            FreeIdentifier(exp.identifier);
+         break;
+      case memoryErrorExp:
+         delete exp.constant;
+         break;
+      case dereferenceErrorExp:
+      case classMemberSymbolErrorExp:
+         if(exp.member.exp)
+            FreeExpression(exp.member.exp);
+         if(exp.member.member)
+            FreeIdentifier(exp.member.member);
+         break;
+      case structMemberSymbolErrorExp:
+      case debugStateErrorExp:
+      case unknownErrorExp:
+      case noDebuggerErrorExp:
+         break;
    }
    if(freePointer)
    {

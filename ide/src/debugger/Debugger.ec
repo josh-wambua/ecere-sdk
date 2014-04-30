@@ -3235,6 +3235,7 @@ class Debugger
             else
                break;
          }
+         delete eval.result;
          return result;
       }
       return null;
@@ -4994,6 +4995,7 @@ void GDBFallBack(Expression exp, String expString)
    result = Debugger::EvaluateExpression(expString, &evalError);
    if(result)
    {
+      FreeExpContents(exp);
       exp.constant = result;
       exp.type = constantExp;
    }
