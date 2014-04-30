@@ -1,0 +1,23 @@
+----------
+[   ] game.stones[0][0]
+[   ] <char[1024]>  + 0
+-----------------------------------------
+[   ] Syntax Highlighting is broken AGAIN!!!!
+[   ] "  Map<String, bool leak:   Add a ", Ctrl-Space
+
+[   ] Clarify what goes on when opening crossplatform.mk
+
+
+[   ] #795: Mint14 problem is back (But OK on latest Cinnamon)
+
+Broken by  e73c326886132254e338b7d6813009be6be84d6e
+
+[   ] Windows fullscreen/lock come back messed up anchor
+[   ] Duck dissappearing on Debug/Start or Alt-7 (call stack)
+-------------------------------------------------
+[   ] Check instance.ec: need for base = base.templateClass for bad 'methods'
+-------
+[   ] Build GDB 7.7
+--------
+[   ] Debian Update
+[   ] Test with GCC 4.9
