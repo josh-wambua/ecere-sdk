@@ -4005,8 +4005,8 @@ bool MatchTypeExpression(Expression sourceExp, Type dest, OldList conversions, b
 #define OPERATOR_ALL(macro, o, name) \
    macro(o, Int##name, i, int, PrintInt) \
    macro(o, UInt##name, ui, unsigned int, PrintUInt) \
-   macro(o, Int64##name, i, int, PrintInt64) \
-   macro(o, UInt64##name, ui, unsigned int, PrintUInt64) \
+   macro(o, Int64##name, i64, int64, PrintInt64) \
+   macro(o, UInt64##name, ui64, uint64, PrintUInt64) \
    macro(o, Short##name, s, short, PrintShort) \
    macro(o, UShort##name, us, unsigned short, PrintUShort) \
    macro(o, Char##name, c, char, PrintChar) \
@@ -4017,8 +4017,8 @@ bool MatchTypeExpression(Expression sourceExp, Type dest, OldList conversions, b
 #define OPERATOR_INTTYPES(macro, o, name) \
    macro(o, Int##name, i, int, PrintInt) \
    macro(o, UInt##name, ui, unsigned int, PrintUInt) \
-   macro(o, Int64##name, i, int, PrintInt64) \
-   macro(o, UInt64##name, ui, unsigned int, PrintUInt64) \
+   macro(o, Int64##name, i64, int64, PrintInt64) \
+   macro(o, UInt64##name, ui64, uint64, PrintUInt64) \
    macro(o, Short##name, s, short, PrintShort) \
    macro(o, UShort##name, us, unsigned short, PrintUShort) \
    macro(o, Char##name, c, char, PrintChar) \
@@ -4192,7 +4192,13 @@ public Operand GetOperand(Expression exp)
       }
       op.kind = type.kind;
       op.type = exp.expType;
-      if(exp.isConstant && exp.type == constantExp)
+      if(exp.type == stringExp && op.kind == pointerType)
+      {
+         op.ui64 = (uint64)exp.string;
+         op.kind = pointerType;
+         op.ops = uint64Ops;
+      }
+      else if(exp.isConstant && exp.type == constantExp)
       {
          switch(op.kind)
          {
@@ -4294,7 +4300,7 @@ public Operand GetOperand(Expression exp)
             case classType:
                op.ui64 = _strtoui64(exp.constant, null, 0);
                op.kind = pointerType;
-               op.ops = uintOps;
+               op.ops = uint64Ops;
                // op.ptrSize =
                break;
          }
@@ -6727,8 +6733,12 @@ Type FindMemberAndOffset(Type type, char * string, uint * offset)
    return null;
 }
 
+public bool GetParseError() { return parseError; }
+
 Expression ParseExpressionString(char * expression)
 {
+   parseError = false;
+
    fileInput = TempFile { };
    fileInput.Write(expression, 1, strlen(expression));
    fileInput.Seek(0, start);
@@ -7259,7 +7269,7 @@ void ProcessExpressionType(Expression exp)
       case identifierExp:
       {
          Identifier id = exp.identifier;
-         if(!id) return;
+         if(!id || !topContext) return;
 
          // DOING THIS LATER NOW...
          if(id._class && id._class.name)

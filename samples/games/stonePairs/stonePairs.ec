@@ -93,6 +93,9 @@ class MainWindow : Window
       int x, y;
       Stone c;
       bool draw = false;
+      char s[1024] = "Hello";
+      char * st = "Hello";
+      Vector3D bla { 1.0 / 0, 0.0/0.0, log(0) };
 
       // Draw the board
       DrawBitmap(surface, boardBmp, 0,0, 1);

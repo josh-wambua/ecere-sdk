@@ -1,8 +1,10 @@
+[ x ] Syntax Highlighting is broken AGAIN!!!!
+  libec debugging: confused with offset of destType for expType?
+      Seems only GDB fallback is working!
 ----------
 [   ] game.stones[0][0]
 [   ] <char[1024]>  + 0
 -----------------------------------------
-[   ] Syntax Highlighting is broken AGAIN!!!!
 [   ] "  Map<String, bool leak:   Add a ", Ctrl-Space
 
 [   ] Clarify what goes on when opening crossplatform.mk

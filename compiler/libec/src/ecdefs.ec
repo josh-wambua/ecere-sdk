@@ -282,9 +282,9 @@ public enum ExpressionType
    identifierExp, instanceExp, constantExp, stringExp, opExp,
    bracketsExp, indexExp, callExp, memberExp, pointerExp, typeSizeExp,
    castExp, conditionExp, newExp, renewExp, classSizeExp,
-   dummyExp, dereferenceErrorExp, symbolErrorExp, classMemberSymbolErrorExp,
-   structMemberSymbolErrorExp, memoryErrorExp, unknownErrorExp,
-   noDebuggerErrorExp, debugStateErrorExp,
+   dummyExp, dereferenceErrorExp, symbolErrorExp, OBSOLETE_classMemberSymbolErrorExp,
+   memberSymbolErrorExp, memoryErrorExp, unknownErrorExp,
+   noDebuggerErrorExp, OBSOLETE_debugStateErrorExp,
    extensionCompoundExp, classExp, classDataExp, new0Exp, renew0Exp,
    dbopenExp, dbfieldExp, dbtableExp, dbindexExp, extensionExpressionExp, extensionInitializerExp,
    vaArgExp, arrayExp, typeAlignExp
@@ -1381,7 +1381,7 @@ void Compiler_Warning(char * format, ...)
 bool parseError;
 bool skipErrors;
 
-int yyerror(char * s)
+int yyerror()
 {
    if(!skipErrors)
    {

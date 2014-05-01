@@ -309,7 +309,7 @@ L?\"(\\.|[^\\"])*\"     { return(STRING_LITERAL); }
    type_yylloc.start.charPos++ /*= 3 - (type_yylloc.start.col % 3)*/; type_yylloc.end.charPos = type_yylloc.start.charPos; type_yylloc.start.pos = type_yylloc.end.pos;
    }
 
-.         { yylloc.start = yylloc.end; expression_yylloc.start = expression_yylloc.end;  type_yylloc.start = type_yylloc.end; }
+.         { yylloc.start = yylloc.end; expression_yylloc.start = expression_yylloc.end;  type_yylloc.start = type_yylloc.end; yyerror(); }
 
 %%
 

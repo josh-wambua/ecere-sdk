@@ -510,15 +510,13 @@ static void _FreeExpression(Expression exp, bool freePointer)
       case memoryErrorExp:
          delete exp.constant;
          break;
-      case dereferenceErrorExp:
-      case classMemberSymbolErrorExp:
+      case memberSymbolErrorExp:
          if(exp.member.exp)
             FreeExpression(exp.member.exp);
          if(exp.member.member)
             FreeIdentifier(exp.member.member);
          break;
-      case structMemberSymbolErrorExp:
-      case debugStateErrorExp:
+      case dereferenceErrorExp:
       case unknownErrorExp:
       case noDebuggerErrorExp:
          break;

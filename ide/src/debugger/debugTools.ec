@@ -23,8 +23,7 @@ static void CarryExpressionError(Expression exp, Expression expError)
       case memoryErrorExp:
          expError.constant = null;
          break;
-      case dereferenceErrorExp:
-      case classMemberSymbolErrorExp:
+      case memberSymbolErrorExp:
          expError.member.exp = null;
          expError.member.member = null;
          break;
@@ -96,9 +95,9 @@ static char GetGdbFormatChar(Type type)
 
 /*static */bool ExpressionIsError(Expression exp)
 {
-   return (exp.type == dereferenceErrorExp || exp.type == symbolErrorExp || exp.type == classMemberSymbolErrorExp ||
-         exp.type == structMemberSymbolErrorExp || exp.type == memoryErrorExp || exp.type == unknownErrorExp ||
-         exp.type == noDebuggerErrorExp || exp.type == debugStateErrorExp);
+   return (exp.type == dereferenceErrorExp || exp.type == symbolErrorExp ||
+         exp.type == memberSymbolErrorExp || exp.type == memoryErrorExp || exp.type == unknownErrorExp ||
+         exp.type == noDebuggerErrorExp);
 }
 
 void DebugComputeExpression(Expression exp)
@@ -189,86 +188,89 @@ void DebugComputeExpression(Expression exp)
          else
             hasAddress = false;
 
-         switch(kind)
+         if(evalError == dummyExp)
          {
-            case charType:
-               delete evaluation;
-               evaluation = Debugger::EvaluateExpression(exp.identifier.string, &evalError);
-               if(evaluation)
-               {
-                  //int c, len;
-                  char * temp;
-                  temp = strstr(evaluation, " '");
-                  //len = strlen(temp);
-                  if(temp)
-                     temp[0] = '\0';
-                  {/*
-                     for(c = 0; c < len; c++)
-                        temp[c] = ' ';
-                     eString_TrimRSpaces(evaluation, evaluation);
-                  */}
-               }
-               break;
-            case shortType:
-            case intType:
-            case longType:
-            case intPtrType:
-            case intSizeType:
-            case _BoolType:
-            case int64Type:
-            case floatType:
-            case doubleType:
-            case enumType:
-            case pointerType:
-               delete evaluation;
-               evaluation = Debugger::EvaluateExpression(exp.identifier.string, &evalError);
-               if(evaluation)
-               {
-                  if(kind == pointerType)
-                  {
-                     uint64 value;
-                     value = _strtoui64(evaluation, null, 0);
-                     delete evaluation;
-                     evaluation = PrintHexUInt64(value);
-                  }
-               }
-               break;
-            case classType:
-               if(isPointer)
-               {
-                  int size;
-                  char format;
-                  delete evaluation;
-                  //evaluation = Debugger::EvaluateExpression(exp.identifier.string, &evalError);
-                  size = ComputeTypeSize(exp.expType); //exp.expType.arrayType.size;
-                  format = GetGdbFormatChar(exp.expType);
-                  evaluation = Debugger::ReadMemory(address, size, format, &evalError);
-                  if(evaluation)
-                     StripQuotes(evaluation, evaluation);
-               }
-               break;
-            case structType:
-            case unionType:
-            case functionType:
-               //evaluation = Debugger::EvaluateExpression(exp.identifier.string, &evalError);
-               delete evaluation;
-               break;
-            case arrayType:
+            switch(kind)
             {
-               // for classType  --> if(_class.type == structClass) ?
-               //char temp[1024];
-               //sprintf(temp, "&%s", exp.identifier.string);
-               //evaluation = Debugger::EvaluateExpression(temp, &evalError);
-               break;
+               case charType:
+                  delete evaluation;
+                  evaluation = Debugger::EvaluateExpression(exp.identifier.string, &evalError);
+                  if(evaluation)
+                  {
+                     //int c, len;
+                     char * temp;
+                     temp = strstr(evaluation, " '");
+                     //len = strlen(temp);
+                     if(temp)
+                        temp[0] = '\0';
+                     {/*
+                        for(c = 0; c < len; c++)
+                           temp[c] = ' ';
+                        eString_TrimRSpaces(evaluation, evaluation);
+                     */}
+                  }
+                  break;
+               case shortType:
+               case intType:
+               case longType:
+               case intPtrType:
+               case intSizeType:
+               case _BoolType:
+               case int64Type:
+               case floatType:
+               case doubleType:
+               case enumType:
+               case pointerType:
+                  delete evaluation;
+                  evaluation = Debugger::EvaluateExpression(exp.identifier.string, &evalError);
+                  if(evaluation)
+                  {
+                     if(kind == pointerType)
+                     {
+                        uint64 value;
+                        value = _strtoui64(evaluation, null, 0);
+                        delete evaluation;
+                        evaluation = PrintHexUInt64(value);
+                     }
+                  }
+                  break;
+               case classType:
+                  if(isPointer)
+                  {
+                     int size;
+                     char format;
+                     delete evaluation;
+                     //evaluation = Debugger::EvaluateExpression(exp.identifier.string, &evalError);
+                     size = ComputeTypeSize(exp.expType); //exp.expType.arrayType.size;
+                     format = GetGdbFormatChar(exp.expType);
+                     evaluation = Debugger::ReadMemory(address, size, format, &evalError);
+                     if(evaluation)
+                        StripQuotes(evaluation, evaluation);
+                  }
+                  break;
+               case structType:
+               case unionType:
+               case functionType:
+                  //evaluation = Debugger::EvaluateExpression(exp.identifier.string, &evalError);
+                  delete evaluation;
+                  break;
+               case arrayType:
+               {
+                  // for classType  --> if(_class.type == structClass) ?
+                  //char temp[1024];
+                  //sprintf(temp, "&%s", exp.identifier.string);
+                  //evaluation = Debugger::EvaluateExpression(temp, &evalError);
+                  break;
+               }
+               case ellipsisType:
+               case methodType:
+               case vaListType:
+               // case TypeTypedObject, TypeAnyObject, TypeClassPointer:
+               case dummyType:
+                  delete evaluation;
+                  evaluation = Debugger::EvaluateExpression(exp.identifier.string, &evalError);
+                  break;
             }
-            case ellipsisType:
-            case methodType:
-            case vaListType:
-            // case TypeTypedObject, TypeAnyObject, TypeClassPointer:
-            case dummyType:
-               delete evaluation;
-               evaluation = Debugger::EvaluateExpression(exp.identifier.string, &evalError);
-               break;
          }
          switch(evalError)
          {
@@ -468,63 +470,76 @@ void DebugComputeExpression(Expression exp)
                      }
                      else if(exp.op.op == '*')
                      {
-                        uint64 address;
-                        int size;
-                        char format;
-                        GetUInt64(exp1, &address);
-                        size = ComputeTypeSize(exp.expType); //exp.expType.arrayType.size;
-                        format = GetGdbFormatChar(exp.expType);
-                        if(format)
+                        if(!exp.expType)
                         {
-                           evaluation = Debugger::ReadMemory(address, size, format, &evalError);
-                           switch(evalError)
-                           {
-                              case dummyExp:
-                                 if(evaluation)
-                                 {
-                                    expNew = ParseExpressionString(evaluation);
-                                    expNew.address = address;
-                                    expNew.hasAddress = true;
-                                    delete evaluation;
-                                    expNew.destType = exp.expType;
-                                    FreeType(exp.destType);
-                                    FreeExpContents(exp);
-                                    ProcessExpressionType(expNew);
-                                    DebugComputeExpression(expNew);
-                                    expNew.prev = prev;
-                                    expNew.next = next;
-                                    expNew.isConstant = true;
-                                    *exp = *expNew;
-                                    delete expNew;
-                                 }
-                                 else
-                                 {
-                                    // Unhandled code path, evaluation is null
-                                    FreeExpContents(exp);
-                                    exp.type = unknownErrorExp;
-                                 }
-                                 break;
-                              case memoryErrorExp:
-                                 delete evaluation;
-                                 FreeExpContents(exp1);
-                                 exp1.type = evalError;
-                                 exp1.constant = PrintHexUInt64(address);
-                                 expError = exp1;
-                                 break;
-                              default:
-                                 delete evaluation;
-                                 FreeExpContents(exp1);
-                                 exp1.type = evalError;
-                                 expError = exp1;
-                                 break;
-
-                           }
+                           delete evaluation;
+                           FreeExpContents(exp1);
+                           exp1.type = dereferenceErrorExp;
+                           expError = exp1;
                         }
                         else
                         {
-                           FreeExpContents(exp1);
-                           exp1.type = unknownErrorExp;  // Not supported yet, generate error to fallback to GDB printout
-                           expError = exp1;
+                           uint64 address;
+                           int size;
+                           char format;
+                           if(exp1.expType.kind == structType)
+                              address = exp1.address;
+                           else
+                              GetUInt64(exp1, &address);
+                           size = ComputeTypeSize(exp.expType); //exp.expType.arrayType.size;
+                           format = GetGdbFormatChar(exp.expType);
+                           if(format)
+                           {
+                              evaluation = Debugger::ReadMemory(address, size, format, &evalError);
+                              switch(evalError)
+                              {
+                                 case dummyExp:
+                                    if(evaluation)
+                                    {
+                                       expNew = ParseExpressionString(evaluation);
+                                       expNew.address = address;
+                                       expNew.hasAddress = true;
+                                       delete evaluation;
+                                       expNew.destType = exp.expType;
+                                       FreeType(exp.destType);
+                                       FreeExpContents(exp);
+                                       ProcessExpressionType(expNew);
+                                       DebugComputeExpression(expNew);
+                                       expNew.prev = prev;
+                                       expNew.next = next;
+                                       expNew.isConstant = true;
+                                       *exp = *expNew;
+                                       delete expNew;
+                                    }
+                                    else
+                                    {
+                                       // Unhandled code path, evaluation is null
+                                       FreeExpContents(exp);
+                                       exp.type = unknownErrorExp;
+                                    }
+                                    break;
+                                 case memoryErrorExp:
+                                    delete evaluation;
+                                    FreeExpContents(exp1);
+                                    exp1.type = evalError;
+                                    exp1.constant = PrintHexUInt64(address);
+                                    expError = exp1;
+                                    break;
+                                 default:
+                                    delete evaluation;
+                                    FreeExpContents(exp1);
+                                    exp1.type = evalError;
+                                    expError = exp1;
+                                    break;
+
+                              }
+                           }
+                           else
+                           {
+                              FreeExpContents(exp1);
+                              exp1.type = unknownErrorExp;  // Not supported yet, generate error to fallback to GDB printout
+                              expError = exp1;
+                           }
                         }
                      }
                   }
@@ -545,22 +560,55 @@ void DebugComputeExpression(Expression exp)
                // TODO: Do pointer operations
                if(exp1.expType && exp1.expType.type)
                {
-                  uint size = ComputeTypeSize(exp1.expType.type);
-                  if(size)
+                  if(exp1.type == stringExp)
                   {
-                     op1.ui /= exp1.expType.type.size;
-                     CallOperator(exp, exp1, exp2, op1, op2);
-                     if(exp.type == constantExp)
+                     int len = exp1.string ? strlen(exp1.string)-2 : 0;
+                     uint64 offset = (exp.op.op == '+') ? op2.i64 : -op2.i64;
+                     String newString = null;
+                     if(len >= 0 && offset <= len)
                      {
-                        exp.address = _strtoui64(exp.constant, null, 0);
-                        exp.address *= size;
+                        newString = new char[3 + len - offset];
+                        newString[0] = '\"';
+                        memcpy(newString + 1, exp1.string + 1 + offset, len - offset);
+                        newString[1 + len - offset] = '\"';
+                        newString[1 + len - offset + 1] = 0;
+                     }
+                     FreeExpContents(exp);
+                     if(newString)
+                     {
+                        exp.type = stringExp;
+                        exp.string = newString;
+                     }
+                     else
+                        exp.type = dereferenceErrorExp;
+                  }
+                  else
+                  {
+                     uint size = ComputeTypeSize(exp1.expType.type);
+                     if(size)
+                     {
+                        op1.ui64 /= exp1.expType.type.size;
+                        CallOperator(exp, exp1, exp2, op1, op2);
+                        if(exp.type == constantExp)
+                        {
+                           exp.address = _strtoui64(exp.constant, null, 0);
+                           exp.address *= size;
+                           if(op1.type.kind == arrayType)
+                              exp.hasAddress = true;
+                        }
                      }
                   }
                }
             }
             else
             {
-               CallOperator(exp, exp1, exp2, op1, op2);
+               if((exp1 && exp1.type == stringExp) || (exp2 && exp2.type == stringExp))
+               {
+                  FreeExpContents(exp);
+                  exp.type = unknownErrorExp;   // We should have an invalid operands error
+               }
+               else
+                  CallOperator(exp, exp1, exp2, op1, op2);
             }
             if(op1.type) FreeType(op1.type);
             if(op2.type) FreeType(op2.type);
@@ -623,8 +671,13 @@ void DebugComputeExpression(Expression exp)
             // 0 == size = ComputeTypeSize(exp.expType.arrayType);
             // 4 == size = ComputeTypeSize(exp.index.exp.expType);
             // 0 == size = ComputeTypeSize(exp.index.exp.expType.arrayType);
+
             size = ComputeTypeSize(exp.expType);
-            format = GetGdbFormatChar(exp.expType);
+            if(exp.expType && exp.expType.type && exp.expType.kind == arrayType)
+               // For multilevels arrays
+               format = 'x';
+            else
+               format = GetGdbFormatChar(exp.expType);
 
             for(e = exp.index.index->first; e; e = e.next)
             {
@@ -647,64 +700,108 @@ void DebugComputeExpression(Expression exp)
                if(exp.expType) FreeType(exp.expType);
                exp.expType = Dereference(exp.index.exp.expType);
 
-               if(exp.index.index && exp.index.index->last && ((Expression)exp.index.index->last) && ((Expression)exp.index.index->last).expType &&
-                  ((Expression)exp.index.index->last).expType.kind == intType)
+               if(!exp.expType)
                {
-                  uint64 address, offset;
-                  Expression expNew, last = (Expression)exp.index.index->last;
-                  //GetUInt(exp.index.exp, &address);
-
-                  // TOFIX: Check if it has address: TESTING
-                  if(exp.index.exp.hasAddress && (exp.index.exp.expType.kind == arrayType))
-                     address = exp.index.exp.address;
-                  else if(exp.index.exp.type == constantExp)
-                     GetUInt64(exp.index.exp, &address);
-
-                  GetUInt64(last, &offset);
-                  //size = ComputeTypeSize(exp.expType.arrayType); //exp.expType.arrayType.size;
-                  address += offset * size;
-                  evaluation = Debugger::ReadMemory(address, size, format, &evalError);
-                  switch(evalError)
+                  delete evaluation;
+                  FreeExpContents(exp);
+                  exp.type = dereferenceErrorExp;
+               }
+               else if(exp.index.index && exp.index.index->last && ((Expression)exp.index.index->last) && ((Expression)exp.index.index->last).expType)
+               {
+                  Type type = ((Expression)exp.index.index->last).expType;
+                  if(type.kind == intType || type.kind == charType || type.kind == shortType || type.kind == int64Type || type.kind == intPtrType ||
+                     type.kind == intSizeType || type.kind == longType || type.kind == _BoolType || type.kind == enumType ||
+                        (type.kind == classType && type._class && type._class.registered &&
+                           type._class.registered.type == enumClass))
                   {
-                     case dummyExp:
-                        if(evaluation)
+                     uint64 address = 0, offset = 0;
+                     Expression expNew, last = (Expression)exp.index.index->last;
+                     //GetUInt(exp.index.exp, &address);
+
+                     // TOFIX: Check if it has address: TESTING
+                     if(exp.index.exp.hasAddress && (exp.index.exp.expType.kind == arrayType))
+                        address = exp.index.exp.address;
+                     else if(exp.index.exp.type == constantExp)
+                        GetUInt64(exp.index.exp, &address);
+
+                     GetUInt64(last, &offset);
+                     //size = ComputeTypeSize(exp.expType.arrayType); //exp.expType.arrayType.size;
+                     address += offset * size;
+                     if(exp.index.exp.type == stringExp)
+                     {
+                        String string = exp.index.exp.string;
+                        int len = string ? strlen(string)-2 : 0;
+                        bool valid = false;
+                        char ch = 0;
+                        if(len >= 0 && offset <= len)
                         {
-                           expNew = ParseExpressionString(evaluation);
-                           delete evaluation;
-                           expNew.destType = exp.expType;
-                           FreeType(exp.destType);
-                           FreeExpContents(exp);
-                           ProcessExpressionType(expNew);
-                           DebugComputeExpression(expNew);
-
-                           // TOFIX: Only for Array Types
-                           expNew.address = address;
-
-                           expNew.hasAddress = true;
-                           expNew.prev = prev;
-                           expNew.next = next;
-                           expNew.isConstant = true;
-                           *exp = *expNew;
-                           delete expNew;
+                           ch = offset < len ? string[1 + offset] : 0;
+                           valid = true;
+                        }
+                        FreeExpContents(exp);
+                        if(valid)
+                        {
+                           exp.type = constantExp;
+                           exp.constant = PrintChar(ch);
                         }
                         else
-                        {
-                           // Unhandled code path, evaluation is null
-                           FreeExpContents(exp);
-                           exp.type = unknownErrorExp;
-                        }
-                        break;
-                     case memoryErrorExp:
-                        delete evaluation;
+                           exp.type = dereferenceErrorExp;
+                     }
+                     else if(exp.expType.kind == arrayType)
+                     {
                         FreeExpContents(exp);
-                        exp.type = evalError;
+                        exp.type = constantExp;
+                        exp.isConstant = true;
                         exp.constant = PrintHexUInt64(address);
-                        break;
-                     default:
-                        delete evaluation;
-                        FreeExpContents(exp);
-                        exp.type = evalError;
-                        break;
+                        exp.address = address;
+                        exp.hasAddress = true;
+                     }
+                     else
+                     {
+                        evaluation = Debugger::ReadMemory(address, size, format, &evalError);
+                        switch(evalError)
+                        {
+                           case dummyExp:
+                              if(evaluation)
+                              {
+                                 expNew = ParseExpressionString(evaluation);
+                                 delete evaluation;
+                                 expNew.destType = exp.expType;
+                                 FreeType(exp.destType);
+                                 FreeExpContents(exp);
+                                 ProcessExpressionType(expNew);
+                                 DebugComputeExpression(expNew);
+
+                                 // TOFIX: Only for Array Types
+                                 expNew.address = address;
+
+                                 expNew.hasAddress = true;
+                                 expNew.prev = prev;
+                                 expNew.next = next;
+                                 expNew.isConstant = true;
+                                 *exp = *expNew;
+                                 delete expNew;
+                              }
+                              else
+                              {
+                                 // Unhandled code path, evaluation is null
+                                 FreeExpContents(exp);
+                                 exp.type = unknownErrorExp;
+                              }
+                              break;
+                           case memoryErrorExp:
+                              delete evaluation;
+                              FreeExpContents(exp);
+                              exp.type = evalError;
+                              exp.constant = PrintHexUInt64(address);
+                              break;
+                           default:
+                              delete evaluation;
+                              FreeExpContents(exp);
+                              exp.type = evalError;
+                              break;
+                        }
+                     }
                   }
                }
             }
@@ -1240,9 +1337,11 @@ void DebugComputeExpression(Expression exp)
                            exp.isConstant = true;
                         }
                      }
+                     else
+                        exp.type = memberSymbolErrorExp;
                   }
                   else
-                     exp.type = classMemberSymbolErrorExp;
+                     exp.type = memberSymbolErrorExp;
                }
             }
 
@@ -1254,7 +1353,7 @@ void DebugComputeExpression(Expression exp)
          }
          else
          {
-            exp.type = classMemberSymbolErrorExp;
+            exp.type = memberSymbolErrorExp;
          }
          break;
       }
@@ -1429,34 +1528,78 @@ void DebugComputeExpression(Expression exp)
          }
          break;
       }
-      /*
-      case ExpCondition:
+      case conditionExp:
       {
-         Expression e;
-         exp.isConstant = true;
-
-         FreeType(exp.cond.cond.destType);
-         exp.cond.cond.destType = MkClassType("bool");
-         DebugComputeExpression(exp.cond.cond);
-         if(!exp.cond.cond.isConstant)
-            exp.isConstant = false;
-         for(e = exp.cond.exp->first; e; e = e.next)
+         if(exp.cond.cond)
          {
-            FreeType(e.destType);
-            e.destType = exp.destType;
-            DebugComputeExpression(e);
-            if(!e.isConstant)
-               exp.isConstant = false;
-         }
-         if(!exp.cond.elseExp.isConstant)
-            exp.isConstant = false;
+            DebugComputeExpression(exp.cond.cond);
 
-         FreeType(exp.cond.elseExp.destType);
-         exp.cond.elseExp.destType = exp.destType;
-         DebugComputeExpression(exp.cond.elseExp);
+            if(ExpressionIsError(exp.cond.cond))
+               CarryExpressionError(exp, exp.cond.cond);
+            else if(exp.cond.cond.type == constantExp && exp.cond.cond.constant)
+            {
+               Expression e = null;
+               if(strtol(exp.cond.cond.constant, null, 0))
+               {
+                  for(e = exp.cond.exp ? exp.cond.exp->first : null; e; e = e.next)
+                  {
+                     DebugComputeExpression(e);
+                     if(!e.next) break;
+                  }
+                  if(e)
+                  {
+                     if(ExpressionIsError(e))
+                     {
+                        CarryExpressionError(exp, e);
+                        e = null;
+                     }
+                     else
+                        exp.cond.exp->Remove(e);
+                  }
+               }
+               else
+               {
+                  e = exp.cond.elseExp;
+                  if(e)
+                  {
+                     DebugComputeExpression(e);
+                     if(ExpressionIsError(e))
+                     {
+                        CarryExpressionError(exp, e);
+                        e = null;
+                     }
+                     else
+                        exp.cond.elseExp = null;
+                  }
+               }
+               if(e)
+               {
+                  FreeType(exp.expType);
+                  FreeType(exp.destType);
+                  e.prev = exp.prev;
+                  e.next = exp.next;
+                  FreeExpContents(exp);
+                  *exp = *e;
+                  delete e;
+               }
+               else if(!ExpressionIsError(exp))
+               {
+                  FreeExpContents(exp);
+                  exp.type = unknownErrorExp;
+               }
+            }
+            else
+            {
+               FreeExpContents(exp);
+               exp.type = unknownErrorExp;
+            }
+         }
+         else
+         {
+            FreeExpContents(exp);
+            exp.type = unknownErrorExp;
+         }
          break;
       }
-      */
    }
-
 }
