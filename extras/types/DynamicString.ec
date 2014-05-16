@@ -1,5 +1,7 @@
 #ifdef ECERE_STATIC
 public import static "ecere"
+#else
+import "ecere"
 #endif
 
 #include <stdarg.h>

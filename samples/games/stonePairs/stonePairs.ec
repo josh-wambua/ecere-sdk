@@ -1,5 +1,13 @@
 import "game"
 
+enum TestEnum
+{
+   v = sizeof 2 + 2,
+   w = sizeof ("Hello" + 2),
+   x = sizeof "ABCD",
+   y = sizeof ((char *)"Hello")
+};
+
 define scale = (float)clientSize.h / boardBmp.bitmap.height;
 define upperLeftX = 334;
 define upperLeftY = 147;
@@ -61,7 +69,7 @@ class MainWindow : Window
       player1.NewGame();
    }
 
-   void DrawBitmap(Surface surface, BitmapResource res, int x, int y, float s)
+   void DrawBitmap(Surface surface, BitmapResource res, int x, int y, float s, Point p)
    {
       Bitmap board = boardBmp.bitmap;
       Bitmap bmp = res.bitmap;
@@ -81,7 +89,7 @@ class MainWindow : Window
       Bitmap stone = stoneBmps[color].bitmap;
       float x = upperLeftX + (where.x + .5f) * spaceX - stone.width / 2;
       float y = upperLeftY + (where.y + .5f) * spaceY - stone.height / 2;
-      DrawBitmap(surface, stoneBmps[color], (int)x, (int)y, 1);
+      DrawBitmap(surface, stoneBmps[color], (int)x, (int)y, 1, { });
    }
 
    void OnRedraw(Surface surface)
@@ -93,9 +101,27 @@ class MainWindow : Window
       int x, y;
       Stone c;
       bool draw = false;
+      char s[1024] = "Hello";
+      char * st = "Hello\nYou!!";
+      char * b = "Hello\nYou!!" + 3;
+      int a = sizeof("Hello\nYou!!" + 3);
+      //char * st = "C:\windows"; //"Hello\zYou!!";
+      Vector3D bla { 1.0 / 0, 0.0/0.0, log(-1) };
+      Matrix m { };
+      double aa = sqrt(-4);
+      Point p { 3, 10 };
+      aa = 1 / 0.0;
+      aa = 1 + 0.0 / 0.0;
+      aa = log(-1);
+      aa = -1 / 0.0;
+
+      m.Identity();
+      m.Rotate(Euler { 30 });
+      m.Scale(5, 5, 5);
+      m.Translate(-2, 5, 10);
 
       // Draw the board
-      DrawBitmap(surface, boardBmp, 0,0, 1);
+      DrawBitmap(surface, boardBmp, 0,0, 1, p);
 
       // Draw the stones in the drawers
       for(c = black; c <= white; c++)
@@ -107,7 +133,7 @@ class MainWindow : Window
 
          for(r = 0; r < game.numStones[c]; r++)
             DrawBitmap(surface, stoneBmps[c],
-               drawerX - stone.width/2, topDrawer + (int)(r*wStone.height*stoneOverlap), 1);
+               drawerX - stone.width/2, topDrawer + (int)(r*wStone.height*stoneOverlap), 1, { });
       }
 
       if(!game.takeOut)
@@ -176,13 +202,13 @@ class MainWindow : Window
 
       // Inform the player he can remove a stone
       if(game.takeOut)
-         DrawBitmap(surface, removeBmp, board.width/2 - removeBmp.bitmap.width*3/2, 30, 4);
+         DrawBitmap(surface, removeBmp, board.width/2 - removeBmp.bitmap.width*3/2, 30, 4, { });
 
       if(!game.winner && !draw)
       {
          // Display the current turn
          DrawBitmap(surface, arrowBmp,
-            ((game.turn == white) ? whiteDrawer : blackDrawer) - arrowBmp.bitmap.width*4/2, 30, 4);
+            ((game.turn == white) ? whiteDrawer : blackDrawer) - arrowBmp.bitmap.width*4/2, 30, 4, { });
       }
    }
 

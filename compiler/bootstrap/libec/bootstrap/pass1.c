@@ -3072,19 +3072,24 @@ while(__ecereMethod___ecereNameSpace__ecere__com__Iterator_Next(&v))
 struct __ecereNameSpace__ecere__sys__OldList * findClassArgs = MkList();
 struct __ecereNameSpace__ecere__sys__OldList * args = MkList();
 struct Statement * compoundStmt;
+char * s;
 
 ListAdd(findClassArgs, MkExpIdentifier(MkIdentifier("module")));
-ListAdd(findClassArgs, MkExpString(QMkString(__extension__ ({
+s = QMkString(__extension__ ({
 char * __ecTemp1 = (((struct __ecereNameSpace__ecere__com__Instance *)__ecereProp___ecereNameSpace__ecere__com__Iterator_Get_data(&v)));
 
 ((struct ClassPropertyValue *)(__ecTemp1 + __ecereClass_ClassPropertyValue->offset));
-})->regClass->name)));
+})->regClass->name);
+ListAdd(findClassArgs, MkExpString(s));
+(__ecereNameSpace__ecere__com__eSystem_Delete(s), s = 0);
 ListAdd(args, MkExpIdentifier(MkIdentifier("_class")));
-ListAdd(args, MkExpString(QMkString(__extension__ ({
+s = QMkString(__extension__ ({
 char * __ecTemp1 = (((struct __ecereNameSpace__ecere__com__Instance *)__ecereProp___ecereNameSpace__ecere__com__Iterator_Get_data(&v)));
 
 ((struct ClassPropertyValue *)(__ecTemp1 + __ecereClass_ClassPropertyValue->offset));
-})->id->string)));
+})->id->string);
+ListAdd(args, MkExpString(s));
+(__ecereNameSpace__ecere__com__eSystem_Delete(s), s = 0);
 ListAdd(args, MkExpCast(MkTypeName(MkListOne(MkSpecifier(INT64)), (((void *)0))), __extension__ ({
 char * __ecTemp1 = (((struct __ecereNameSpace__ecere__com__Instance *)__ecereProp___ecereNameSpace__ecere__com__Iterator_Get_data(&v)));
 

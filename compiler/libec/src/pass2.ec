@@ -26,6 +26,8 @@ static void _FixRefExp(Expression * expPtr, Expression * memberExpPtr)
 
          *memberExpPtr = null;
          newExp = CopyExpression(exp);
+         FreeExpContents(exp);
+
          *(Expression *)((byte *)newExp + (uint)((byte *)memberExpPtr - (byte *)exp)) = memberExp;
 
          memberExp.member.exp = idExp;
@@ -1639,7 +1641,10 @@ static void ProcessExpression(Expression exp)
                      Specifier firstSpec = firstParam ? firstParam.qualifiers->first : null;
 
                      if(firstParam && firstSpec && firstSpec.type == baseSpecifier && firstSpec.specifier == VOID && !firstParam.declarator)
+                     {
                         funcDecl.function.parameters->Remove(funcDecl.function.parameters->first);
+                        FreeTypeName(firstParam);
+                     }
                   }
 
                   if(method.dataType.thisClass && !strcmp(method.dataType.thisClass.string, "class"))
@@ -1792,6 +1797,7 @@ static void ProcessExpression(Expression exp)
                   method.dataType.refCount++;
                }
             }
+
             if(memberExp && (!memberExp.member.exp || !memberExp.member.exp.expType || memberExp.member.exp.expType.kind != subClassType))
             {
                if(method.dataType && !method.dataType.staticMethod && !method.dataType.extraParam)

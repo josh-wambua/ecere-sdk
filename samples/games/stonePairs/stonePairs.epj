@@ -19,7 +19,17 @@
                "_DEBUG"
             ],
             "FastMath" : false
-         }
+         },
+         "Platforms" : [
+            {
+               "Name" : "linux",
+               "Options" : {
+                  "Libraries" : [
+                     "m"
+                  ]
+               }
+            }
+         ]
       },
       {
          "Name" : "Release",

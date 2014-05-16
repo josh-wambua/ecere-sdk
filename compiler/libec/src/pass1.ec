@@ -1950,12 +1950,17 @@ public void ProcessClassDefinitions()
          OldList * findClassArgs = MkList();
          OldList * args = MkList();
          Statement compoundStmt;
+         String s;
 
          ListAdd(findClassArgs, MkExpIdentifier(MkIdentifier("module")));
-         ListAdd(findClassArgs, MkExpString(QMkString(v.regClass.name)));
+         s = QMkString(v.regClass.name);
+         ListAdd(findClassArgs, MkExpString(s));
+         delete s;
 
          ListAdd(args, MkExpIdentifier(MkIdentifier("_class")));
-         ListAdd(args, MkExpString(QMkString(v.id.string)));
+         s = QMkString(v.id.string);
+         ListAdd(args, MkExpString(s));
+         delete s;
          ListAdd(args, MkExpCast(MkTypeName(MkListOne(MkSpecifier(INT64)), null), v.exp));
          compoundStmt = MkCompoundStmt(MkListOne(MkDeclaration(MkListOne(MkSpecifierName("ecere::com::Class")),
                        MkListOne(MkInitDeclarator(MkDeclaratorIdentifier(MkIdentifier("_class")),

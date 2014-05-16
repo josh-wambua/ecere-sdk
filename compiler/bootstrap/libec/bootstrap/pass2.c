@@ -1097,6 +1097,8 @@ static struct Statement * curCompound;
 
 extern struct Expression * CopyExpression(struct Expression * exp);
 
+extern void FreeExpContents(struct Expression * exp);
+
 extern void FreeExpression(struct Expression * exp);
 
 void __ecereMethod___ecereNameSpace__ecere__sys__OldList_Remove(struct __ecereNameSpace__ecere__sys__OldList * this, void *  item);
@@ -1119,6 +1121,7 @@ struct Expression * exp = *expPtr;
 
 *memberExpPtr = (((void *)0));
 newExp = CopyExpression(exp);
+FreeExpContents(exp);
 *(struct Expression **)((unsigned char *)newExp + ((unsigned char *)memberExpPtr - (unsigned char *)exp)) = memberExp;
 memberExp->member.exp = idExp;
 exp->type = 5;
@@ -1381,8 +1384,6 @@ unsigned int constant;
 
 extern struct __ecereNameSpace__ecere__com__ClassProperty * __ecereNameSpace__ecere__com__eClass_FindClassProperty(struct __ecereNameSpace__ecere__com__Class * _class, char *  name);
 
-extern void FreeExpContents(struct Expression * exp);
-
 extern struct Expression * MkExpString(char *  string);
 
 extern char *  QMkString(char *  source);
@@ -1457,6 +1458,8 @@ extern struct Context * SetupTemplatesContext(struct __ecereNameSpace__ecere__co
 
 extern void FinishTemplatesContext(struct Context * context);
 
+extern void FreeTypeName(struct TypeName * typeName);
+
 extern struct Specifier * MkStructOrUnion(int type, struct Identifier * id, struct __ecereNameSpace__ecere__sys__OldList * definitions);
 
 extern struct Type * ProcessTypeString(char *  string, unsigned int staticMethod);
@@ -1464,8 +1467,6 @@ extern struct Type * ProcessTypeString(char *  string, unsigned int staticMethod
 extern void PrintTypeNoConst(struct Type * type, char *  string, unsigned int printName, unsigned int fullName);
 
 extern int ComputeTypeSize(struct Type * type);
-
-extern void FreeTypeName(struct TypeName * typeName);
 
 extern struct Type * ProcessType(struct __ecereNameSpace__ecere__sys__OldList * specs, struct Declarator * decl);
 
@@ -2580,7 +2581,10 @@ struct TypeName * firstParam = ((struct TypeName *)(*funcDecl->function.paramete
 struct Specifier * firstSpec = firstParam ? (*firstParam->qualifiers).first : (((void *)0));
 
 if(firstParam && firstSpec && firstSpec->type == 0 && firstSpec->specifier == VOID && !firstParam->declarator)
+{
 __ecereMethod___ecereNameSpace__ecere__sys__OldList_Remove((&*funcDecl->function.parameters), (*funcDecl->function.parameters).first);
+FreeTypeName(firstParam);
+}
 }
 if(method->dataType->thisClass && !strcmp(method->dataType->thisClass->string, "class"))
 {
