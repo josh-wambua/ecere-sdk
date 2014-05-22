@@ -873,7 +873,7 @@ unsigned int noExpansion;
 char *  defaultProperty;
 unsigned int comRedefinition;
 int count;
-unsigned int isRemote;
+int isRemote;
 unsigned int internalDecl;
 void *  data;
 unsigned int computeSize;
@@ -3120,7 +3120,7 @@ return spec;
 else
 symbol = FindClass(name);
 }
-if(symbol && symbol->registered && symbol->registered->isRemote == (unsigned int)1)
+if(symbol && symbol->registered && symbol->registered->isRemote == 1)
 {
 char className[1024];
 

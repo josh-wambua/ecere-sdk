@@ -324,9 +324,17 @@ void DebugComputeExpression(Expression exp)
                   {
                      expNew.expType = expNew.destType;
                      expNew.destType.refCount++;
+                     // For negative values parsed as opExp
+                     if(expNew.type == opExp && expNew.op.op == '-' && !expNew.op.exp1 && expNew.op.exp2)
+                     {
+                        expNew.op.exp2.expType = expNew.destType;
+                        expNew.destType.refCount++;
+                        expNew.op.exp2.isConstant = true;
+                     }
                   }
                   else
                      ProcessExpressionType(expNew);
+
                   FreeType(exp.destType);
                   FreeExpContents(exp);
 
@@ -819,7 +827,7 @@ void DebugComputeExpression(Expression exp)
       case opExp:
       {
          Expression expError = null;
-         Expression exp1, exp2 = null;
+         Expression exp1 = null, exp2 = null;
          Operand op1 = { 0 }, op2 = { 0 };
 
          /*
@@ -942,13 +950,19 @@ void DebugComputeExpression(Expression exp)
                         expError = exp.op.exp2;
                      else
                      {
-                        exp1 = exp.op.exp1;
                         exp2 = exp.op.exp2;
+                        exp1 = exp.op.exp1;
                         op1 = GetOperand(exp1);
                         if(op1.type) op1.type.refCount++;
                         op2 = GetOperand(exp2);
                         if(op2.type) op2.type.refCount++;
                      }
+                  }
+                  else
+                  {
+                     exp1 = exp.op.exp1;
+                     op1 = GetOperand(exp1);
+                     if(op1.type) op1.type.refCount++;
                   }
                }
             }

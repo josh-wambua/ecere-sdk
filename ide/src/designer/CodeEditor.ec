@@ -31,13 +31,13 @@ SyntaxColorScheme colorScheme
 */
 
 // The new nice dark scheme -- so peaceful on my brain
-
+/*
 FontResource panelFont { $"Courier New", 10 };
 FontResource codeFont { $"Courier New", 10 };
-/*
+*/
 FontResource panelFont { $"Consolas", 12 };
 FontResource codeFont { $"Consolas", 12 };
-*/
+
 Color selectionColor = lightYellow;
 Color selectionText = Color { 30, 40, 50 };
 Color viewsBackground = Color { 30, 40, 50 };
@@ -6159,7 +6159,9 @@ class CodeEditor : Window
          }
       }
 
-      if(this.privateModule && destType && (destType.kind != pointerType || destType.type.kind != voidType) && destType.kind != ellipsisType)
+      if(this.privateModule && destType && (destType.kind == _BoolType || destType.kind == classType || destType.kind == enumType || destType.kind == structType || destType.kind == templateType || destType.kind == thisClassType || destType.kind == unionType ||
+         (destType.kind == pointerType && destType.type.kind != voidType)))
+      //if(this.privateModule && destType && (destType.kind != pointerType || destType.type.kind != voidType) && destType.kind != ellipsisType)
       {
          listedEnums = ListEnumsModule(this.privateModule, destType);
       }

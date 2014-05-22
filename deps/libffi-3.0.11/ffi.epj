@@ -40,7 +40,10 @@
                "Folder" : "x86",
                "Files" : [
                   "win32.S"
-               ]
+               ],
+               "Options" : {
+                  "ExcludeFromBuild" : true
+               }
             },
             {
                "Folder" : "x64",

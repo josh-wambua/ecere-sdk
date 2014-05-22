@@ -1060,7 +1060,7 @@ private:
          int loX = 0, loY = 0, hiX = pw, hiY = ph;
          for(win = parent.children.first; win; win = win.next)
          {
-            if(!win.isActiveClient && win.visible)
+            if(!win.nonClient && !win.isActiveClient && win.visible)
             {
                Size size = win.size;
                Point pos = win.position;
@@ -9328,7 +9328,23 @@ public:
    property bool isActiveClient
    {
       property_category $"Behavior"
-      set { style.isActiveClient = value; }
+      set
+      {
+         if(parent && style.isActiveClient != value && !style.hidden)
+         {
+            if(value)
+            {
+               if(state == minimized) parent.numIcons++;
+               parent.numPositions++;
+            }
+            else
+            {
+               if(state == minimized) parent.numIcons--;
+               parent.numPositions--;
+            }
+         }
+         style.isActiveClient = value;
+      }
       get { return style.isActiveClient; }
    };
 

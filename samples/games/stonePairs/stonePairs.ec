@@ -1,5 +1,13 @@
 import "game"
 
+enum TestEnum
+{
+   v = sizeof 2 + 2,
+   w = sizeof ("Hello" + 2),
+   x = sizeof "ABCD",
+   y = sizeof ((char *)"Hello")
+};
+
 define scale = (float)clientSize.h / boardBmp.bitmap.height;
 define upperLeftX = 334;
 define upperLeftY = 147;
@@ -93,6 +101,28 @@ class MainWindow : Window
       int x, y;
       Stone c;
       bool draw = false;
+      char s[1024] = "Hello";
+      char * st = "Hello\nYou!!";
+      char * b = "Hello\nYou!!" + 3;
+      int a = sizeof("Hello\nYou!!" + 3);
+      //char * st = "C:\windows"; //"Hello\zYou!!";
+      Vector3D bla { 1.0 / 0, 0.0/0.0, log(-1) };
+      Matrix m { };
+      double aa = sqrt(-4);
+      Point p { 3, 10 };
+      Degrees i = 20;
+      Degrees da = sin(i + 5);
+      Degrees db = sin(i + Degrees { 5 });
+
+      aa = 1 / 0.0;
+      aa = 1 + 0.0 / 0.0;
+      aa = log(-1);
+      aa = -1 / 0.0;
+
+      m.Identity();
+      m.Rotate(Euler { 30 });
+      m.Scale(5, 5, 5);
+      m.Translate(-2, 5, 10);
 
       // Draw the board
       DrawBitmap(surface, boardBmp, 0,0, 1);

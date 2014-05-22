@@ -296,7 +296,7 @@ public:
 
    int count;     // DEBUGGING
 
-   bool isRemote;
+   int isRemote;  // TODO: Convert to an enum, can have values 0..3
    bool internalDecl;
    void * data;
    bool computeSize;
@@ -1985,6 +1985,7 @@ static void FixDerivativesBase(Class base, Class mod)
       else if(type == normalClass || type == noHeadClass)
       {
          _class.structSize = _class.offset + size;
+
           _class.typeSize = sizeof(void *);
       }
 
@@ -2187,6 +2188,7 @@ static void FixDerivativesBase(Class base, Class mod)
          template.offsetClass = base.offsetClass;
          template.sizeClass = base.sizeClass;
          template.structSize = base.structSize;
+
          template.vTblSize = base.vTblSize;
 
          FixDerivativesBase(template, mod);
