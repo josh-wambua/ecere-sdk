@@ -1192,7 +1192,7 @@ public:
    OldList methods;
    OldList properties;
    bool itself;
-   bool isRemote;
+   int isRemote;
 };
 
 public class FunctionImport : struct

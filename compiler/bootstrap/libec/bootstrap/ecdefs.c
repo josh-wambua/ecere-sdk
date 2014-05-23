@@ -690,7 +690,7 @@ char * name;
 struct __ecereNameSpace__ecere__sys__OldList methods;
 struct __ecereNameSpace__ecere__sys__OldList properties;
 unsigned int itself;
-unsigned int isRemote;
+int isRemote;
 } __attribute__ ((gcc_struct));
 
 static struct __ecereNameSpace__ecere__com__Class * __ecereClass_ClassImport;
@@ -855,7 +855,7 @@ unsigned int noExpansion;
 char *  defaultProperty;
 unsigned int comRedefinition;
 int count;
-unsigned int isRemote;
+int isRemote;
 unsigned int internalDecl;
 void *  data;
 unsigned int computeSize;
@@ -1414,7 +1414,7 @@ extern char *  strchr(const char * , int);
 char * PassArg(char * output, const char * input)
 {
 #ifdef __WIN32__
-const char * escChars = " !%&'()+,;=[]^`{}~\"";
+const char * escChars = " !\"%&'()+,;=[]^`{}~";
 const char * escCharsQuoted = "\"";
 #else
 const char * escChars = " !\"$&'()*:;<=>?[\\`{|";
@@ -2953,7 +2953,7 @@ __ecereNameSpace__ecere__com__eClass_AddDataMember(class, "name", "char *", arch
 __ecereNameSpace__ecere__com__eClass_AddDataMember(class, "methods", "ecere::sys::OldList", structSize_OldList, arch_PointerSize, 1);
 __ecereNameSpace__ecere__com__eClass_AddDataMember(class, "properties", "ecere::sys::OldList", structSize_OldList, arch_PointerSize, 1);
 __ecereNameSpace__ecere__com__eClass_AddDataMember(class, "itself", "bool", 4, 4, 1);
-__ecereNameSpace__ecere__com__eClass_AddDataMember(class, "isRemote", "bool", 4, 4, 1);
+__ecereNameSpace__ecere__com__eClass_AddDataMember(class, "isRemote", "int", 4, 4, 1);
 class = __ecereNameSpace__ecere__com__eSystem_RegisterClass(5, "FunctionImport", 0, sizeof(struct FunctionImport), 0, 0, 0, module, 1, 1);
 if(((struct __ecereNameSpace__ecere__com__Module *)(((char *)module + structSize_Instance)))->application == ((struct __ecereNameSpace__ecere__com__Module *)(((char *)__thisModule + structSize_Instance)))->application && class)
 __ecereClass_FunctionImport = class;

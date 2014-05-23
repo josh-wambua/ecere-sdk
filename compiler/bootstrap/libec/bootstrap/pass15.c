@@ -679,7 +679,7 @@ char *  name;
 struct __ecereNameSpace__ecere__sys__OldList methods;
 struct __ecereNameSpace__ecere__sys__OldList properties;
 unsigned int itself;
-unsigned int isRemote;
+int isRemote;
 } __attribute__ ((gcc_struct));
 
 extern struct __ecereNameSpace__ecere__com__Class * __ecereClass_Symbol;
@@ -851,7 +851,7 @@ unsigned int noExpansion;
 char *  defaultProperty;
 unsigned int comRedefinition;
 int count;
-unsigned int isRemote;
+int isRemote;
 unsigned int internalDecl;
 void *  data;
 unsigned int computeSize;
@@ -4865,7 +4865,7 @@ struct Conversion * after = (conversions != (((void *)0))) ? conversions->last :
 
 if(!convert->dataType)
 convert->dataType = ProcessTypeString(convert->dataTypeString, 0x0);
-if(MatchTypes(convert->dataType, dest, conversions, (((void *)0)), (((void *)0)), 0x0, 0x1, 0x0, 0x1))
+if((!isConversionExploration || convert->dataType->kind == 8 || !strcmp(_class->name, "String")) && MatchTypes(convert->dataType, dest, conversions, (((void *)0)), (((void *)0)), (convert->dataType->kind == 8 && !strcmp(convert->dataTypeString, "String")) ? 0x1 : 0x0, convert->dataType->kind == 8, 0x0, 0x1))
 {
 if(!conversions && !convert->Get)
 return 0x1;
@@ -4926,7 +4926,7 @@ if(!dest->_class->registered->dataType)
 dest->_class->registered->dataType = ProcessTypeString(dest->_class->registered->dataTypeString, 0x0);
 if(dest->_class->registered->dataType->kind == 8 || source->truth || dest->truth)
 {
-if(MatchTypes(source, dest->_class->registered->dataType, conversions, (((void *)0)), (((void *)0)), 0x1, 0x1, 0x0, 0x0))
+if(MatchTypes(source, dest->_class->registered->dataType, conversions, (((void *)0)), (((void *)0)), 0x1, dest->_class->registered->dataType->kind == 8, 0x0, 0x0))
 {
 return 0x1;
 }
@@ -4949,7 +4949,7 @@ struct Conversion * after = (conversions != (((void *)0))) ? conversions->last :
 
 if(!convert->dataType)
 convert->dataType = ProcessTypeString(convert->dataTypeString, 0x0);
-if(convert->dataType != source && MatchTypes(convert->dataType, dest, conversions, (((void *)0)), (((void *)0)), 0x1, 0x1, 0x0, 0x1))
+if(convert->dataType != source && (!isConversionExploration || convert->dataType->kind == 8 || !strcmp(_class->name, "String")) && MatchTypes(convert->dataType, dest, conversions, (((void *)0)), (((void *)0)), convert->dataType->kind == 8, convert->dataType->kind == 8, 0x0, 0x1))
 {
 if(!conversions && !convert->Get)
 return 0x1;
@@ -4973,8 +4973,11 @@ if(enumBaseType && source->_class && source->_class->registered && source->_clas
 {
 if(!source->_class->registered->dataType)
 source->_class->registered->dataType = ProcessTypeString(source->_class->registered->dataTypeString, 0x0);
-if(MatchTypes(source->_class->registered->dataType, dest, conversions, (((void *)0)), (((void *)0)), 0x1, 0x1, 0x0, 0x0))
+if(!isConversionExploration || source->_class->registered->dataType->kind == 8 || !strcmp(source->_class->registered->name, "String"))
 {
+if(MatchTypes(source->_class->registered->dataType, dest, conversions, (((void *)0)), (((void *)0)), source->_class->registered->dataType->kind == 8, source->_class->registered->dataType->kind == 8, 0x0, 0x0))
+return 0x1;
+else if(MatchTypes(dest, source->_class->registered->dataType, (((void *)0)), (((void *)0)), (((void *)0)), 0x0, 0x0, 0x0, 0x0))
 return 0x1;
 }
 }
@@ -4998,7 +5001,7 @@ else if(dest->kind == 23 && (source->kind == 2 || source->kind == 1 || source->k
 return 0x1;
 else if(source->kind == 15 && (dest->kind == 3 || dest->kind == 2 || dest->kind == 1 || source->kind == 24 || dest->kind == 5 || dest->kind == 4 || dest->kind == 22 || dest->kind == 23))
 return 0x1;
-else if(dest->kind == 15 && (source->kind == 3 || source->kind == 2 || source->kind == 1 || source->kind == 24 || source->kind == 5 || source->kind == 4 || source->kind == 22 || source->kind == 23))
+else if(dest->kind == 15 && !isConversionExploration && (source->kind == 3 || source->kind == 2 || source->kind == 1 || source->kind == 24 || source->kind == 5 || source->kind == 4 || source->kind == 22 || source->kind == 23))
 return 0x1;
 else if((dest->kind == 11 || (dest->kind == 13 && dest->type->kind == 11) || dest->kind == 16) && ((source->kind == 11 || (source->kind == 13 && source->type->kind == 11) || source->kind == 16)))
 {
@@ -5481,7 +5484,7 @@ else if(source->kind == 8)
 {
 struct __ecereNameSpace__ecere__com__Class * _class = source->_class ? source->_class->registered : (((void *)0));
 
-if(_class && (_class->type == 3 || !strcmp(_class->fullName, "bool") || _class->type == 2))
+if(_class && (_class->type == 3 || _class->type == 2))
 {
 if(dest->kind != 8)
 {
@@ -5541,8 +5544,17 @@ return 0x1;
 if(dest->kind == 8)
 {
 struct __ecereNameSpace__ecere__com__Class * _class = dest->_class ? dest->_class->registered : (((void *)0));
+unsigned int fittingValue = 0x0;
 
-if(_class && !dest->truth && (_class->type == 3 || !strcmp(_class->fullName, "bool") || (_class->type != 1 && !value && source->kind == 3) || _class->type == 2))
+if(_class && _class->type == 4)
+{
+struct __ecereNameSpace__ecere__com__Class * enumClass = __ecereNameSpace__ecere__com__eSystem_FindClass(privateModule, "enum");
+struct __ecereNameSpace__ecere__com__EnumClassData * c = (_class ? ((void *)(((char *)_class->data) + enumClass->offsetClass)) : (((void *)0)));
+
+if(c && value >= 0 && value <= c->largest)
+fittingValue = 0x1;
+}
+if(_class && !dest->truth && (_class->type == 3 || fittingValue || (_class->type != 1 && !value && source->kind == 3) || _class->type == 2))
 {
 if(_class->type == 0 || _class->type == 5)
 {
@@ -5781,7 +5793,7 @@ static unsigned int IntAdd(struct Expression * exp, struct Operand * op1, struct
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i + value2);
+exp->string = PrintInt((op1->i + value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -5796,7 +5808,7 @@ static unsigned int UIntAdd(struct Expression * exp, struct Operand * op1, struc
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui + value2);
+exp->string = PrintUInt((op1->ui + value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -5811,7 +5823,7 @@ static unsigned int Int64Add(struct Expression * exp, struct Operand * op1, stru
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 + value2);
+exp->string = PrintInt64((op1->i64 + value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -5826,7 +5838,7 @@ static unsigned int UInt64Add(struct Expression * exp, struct Operand * op1, str
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 + value2);
+exp->string = PrintUInt64((op1->ui64 + value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -5841,7 +5853,7 @@ static unsigned int ShortAdd(struct Expression * exp, struct Operand * op1, stru
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s + value2);
+exp->string = PrintShort((op1->s + value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -5856,7 +5868,7 @@ static unsigned int UShortAdd(struct Expression * exp, struct Operand * op1, str
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us + value2);
+exp->string = PrintUShort((op1->us + value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -5871,7 +5883,7 @@ static unsigned int CharAdd(struct Expression * exp, struct Operand * op1, struc
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c + value2);
+exp->string = PrintChar((op1->c + value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -5886,7 +5898,7 @@ static unsigned int UCharAdd(struct Expression * exp, struct Operand * op1, stru
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc + value2);
+exp->string = PrintUChar((op1->uc + value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -5901,7 +5913,7 @@ static unsigned int FloatAdd(struct Expression * exp, struct Operand * op1, stru
 float value2 = op2->f;
 
 exp->type = 2;
-exp->string = PrintFloat(op1->f + value2);
+exp->string = PrintFloat((float)(op1->f + value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -5916,7 +5928,7 @@ static unsigned int DoubleAdd(struct Expression * exp, struct Operand * op1, str
 double value2 = op2->d;
 
 exp->type = 2;
-exp->string = PrintDouble(op1->d + value2);
+exp->string = PrintDouble((double)(op1->d + value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -5931,7 +5943,7 @@ static unsigned int IntSub(struct Expression * exp, struct Operand * op1, struct
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i - value2);
+exp->string = PrintInt((op1->i - value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -5946,7 +5958,7 @@ static unsigned int UIntSub(struct Expression * exp, struct Operand * op1, struc
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui - value2);
+exp->string = PrintUInt((op1->ui - value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -5961,7 +5973,7 @@ static unsigned int Int64Sub(struct Expression * exp, struct Operand * op1, stru
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 - value2);
+exp->string = PrintInt64((op1->i64 - value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -5976,7 +5988,7 @@ static unsigned int UInt64Sub(struct Expression * exp, struct Operand * op1, str
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 - value2);
+exp->string = PrintUInt64((op1->ui64 - value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -5991,7 +6003,7 @@ static unsigned int ShortSub(struct Expression * exp, struct Operand * op1, stru
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s - value2);
+exp->string = PrintShort((op1->s - value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6006,7 +6018,7 @@ static unsigned int UShortSub(struct Expression * exp, struct Operand * op1, str
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us - value2);
+exp->string = PrintUShort((op1->us - value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6021,7 +6033,7 @@ static unsigned int CharSub(struct Expression * exp, struct Operand * op1, struc
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c - value2);
+exp->string = PrintChar((op1->c - value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6036,7 +6048,7 @@ static unsigned int UCharSub(struct Expression * exp, struct Operand * op1, stru
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc - value2);
+exp->string = PrintUChar((op1->uc - value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6051,7 +6063,7 @@ static unsigned int FloatSub(struct Expression * exp, struct Operand * op1, stru
 float value2 = op2->f;
 
 exp->type = 2;
-exp->string = PrintFloat(op1->f - value2);
+exp->string = PrintFloat((float)(op1->f - value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6066,7 +6078,7 @@ static unsigned int DoubleSub(struct Expression * exp, struct Operand * op1, str
 double value2 = op2->d;
 
 exp->type = 2;
-exp->string = PrintDouble(op1->d - value2);
+exp->string = PrintDouble((double)(op1->d - value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6081,7 +6093,7 @@ static unsigned int IntMul(struct Expression * exp, struct Operand * op1, struct
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i * value2);
+exp->string = PrintInt((op1->i * value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6096,7 +6108,7 @@ static unsigned int UIntMul(struct Expression * exp, struct Operand * op1, struc
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui * value2);
+exp->string = PrintUInt((op1->ui * value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6111,7 +6123,7 @@ static unsigned int Int64Mul(struct Expression * exp, struct Operand * op1, stru
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 * value2);
+exp->string = PrintInt64((op1->i64 * value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6126,7 +6138,7 @@ static unsigned int UInt64Mul(struct Expression * exp, struct Operand * op1, str
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 * value2);
+exp->string = PrintUInt64((op1->ui64 * value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6141,7 +6153,7 @@ static unsigned int ShortMul(struct Expression * exp, struct Operand * op1, stru
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s * value2);
+exp->string = PrintShort((op1->s * value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6156,7 +6168,7 @@ static unsigned int UShortMul(struct Expression * exp, struct Operand * op1, str
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us * value2);
+exp->string = PrintUShort((op1->us * value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6171,7 +6183,7 @@ static unsigned int CharMul(struct Expression * exp, struct Operand * op1, struc
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c * value2);
+exp->string = PrintChar((op1->c * value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6186,7 +6198,7 @@ static unsigned int UCharMul(struct Expression * exp, struct Operand * op1, stru
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc * value2);
+exp->string = PrintUChar((op1->uc * value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6201,7 +6213,7 @@ static unsigned int FloatMul(struct Expression * exp, struct Operand * op1, stru
 float value2 = op2->f;
 
 exp->type = 2;
-exp->string = PrintFloat(op1->f * value2);
+exp->string = PrintFloat((float)(op1->f * value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6216,7 +6228,7 @@ static unsigned int DoubleMul(struct Expression * exp, struct Operand * op1, str
 double value2 = op2->d;
 
 exp->type = 2;
-exp->string = PrintDouble(op1->d * value2);
+exp->string = PrintDouble((double)(op1->d * value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6891,7 +6903,7 @@ static unsigned int IntAsign(struct Expression * exp, struct Operand * op1, stru
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i = value2);
+exp->string = PrintInt((op1->i = value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6906,7 +6918,7 @@ static unsigned int UIntAsign(struct Expression * exp, struct Operand * op1, str
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui = value2);
+exp->string = PrintUInt((op1->ui = value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6921,7 +6933,7 @@ static unsigned int Int64Asign(struct Expression * exp, struct Operand * op1, st
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 = value2);
+exp->string = PrintInt64((op1->i64 = value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6936,7 +6948,7 @@ static unsigned int UInt64Asign(struct Expression * exp, struct Operand * op1, s
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 = value2);
+exp->string = PrintUInt64((op1->ui64 = value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6951,7 +6963,7 @@ static unsigned int ShortAsign(struct Expression * exp, struct Operand * op1, st
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s = value2);
+exp->string = PrintShort((op1->s = value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6966,7 +6978,7 @@ static unsigned int UShortAsign(struct Expression * exp, struct Operand * op1, s
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us = value2);
+exp->string = PrintUShort((op1->us = value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6981,7 +6993,7 @@ static unsigned int CharAsign(struct Expression * exp, struct Operand * op1, str
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c = value2);
+exp->string = PrintChar((op1->c = value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -6996,7 +7008,7 @@ static unsigned int UCharAsign(struct Expression * exp, struct Operand * op1, st
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc = value2);
+exp->string = PrintUChar((op1->uc = value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7011,7 +7023,7 @@ static unsigned int FloatAsign(struct Expression * exp, struct Operand * op1, st
 float value2 = op2->f;
 
 exp->type = 2;
-exp->string = PrintFloat(op1->f = value2);
+exp->string = PrintFloat((float)(op1->f = value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7026,7 +7038,7 @@ static unsigned int DoubleAsign(struct Expression * exp, struct Operand * op1, s
 double value2 = op2->d;
 
 exp->type = 2;
-exp->string = PrintDouble(op1->d = value2);
+exp->string = PrintDouble((double)(op1->d = value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7041,7 +7053,7 @@ static unsigned int IntAddAsign(struct Expression * exp, struct Operand * op1, s
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i += value2);
+exp->string = PrintInt((op1->i += value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7056,7 +7068,7 @@ static unsigned int UIntAddAsign(struct Expression * exp, struct Operand * op1, 
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui += value2);
+exp->string = PrintUInt((op1->ui += value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7071,7 +7083,7 @@ static unsigned int Int64AddAsign(struct Expression * exp, struct Operand * op1,
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 += value2);
+exp->string = PrintInt64((op1->i64 += value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7086,7 +7098,7 @@ static unsigned int UInt64AddAsign(struct Expression * exp, struct Operand * op1
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 += value2);
+exp->string = PrintUInt64((op1->ui64 += value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7101,7 +7113,7 @@ static unsigned int ShortAddAsign(struct Expression * exp, struct Operand * op1,
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s += value2);
+exp->string = PrintShort((op1->s += value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7116,7 +7128,7 @@ static unsigned int UShortAddAsign(struct Expression * exp, struct Operand * op1
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us += value2);
+exp->string = PrintUShort((op1->us += value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7131,7 +7143,7 @@ static unsigned int CharAddAsign(struct Expression * exp, struct Operand * op1, 
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c += value2);
+exp->string = PrintChar((op1->c += value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7146,7 +7158,7 @@ static unsigned int UCharAddAsign(struct Expression * exp, struct Operand * op1,
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc += value2);
+exp->string = PrintUChar((op1->uc += value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7161,7 +7173,7 @@ static unsigned int FloatAddAsign(struct Expression * exp, struct Operand * op1,
 float value2 = op2->f;
 
 exp->type = 2;
-exp->string = PrintFloat(op1->f += value2);
+exp->string = PrintFloat((float)(op1->f += value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7176,7 +7188,7 @@ static unsigned int DoubleAddAsign(struct Expression * exp, struct Operand * op1
 double value2 = op2->d;
 
 exp->type = 2;
-exp->string = PrintDouble(op1->d += value2);
+exp->string = PrintDouble((double)(op1->d += value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7191,7 +7203,7 @@ static unsigned int IntSubAsign(struct Expression * exp, struct Operand * op1, s
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i -= value2);
+exp->string = PrintInt((op1->i -= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7206,7 +7218,7 @@ static unsigned int UIntSubAsign(struct Expression * exp, struct Operand * op1, 
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui -= value2);
+exp->string = PrintUInt((op1->ui -= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7221,7 +7233,7 @@ static unsigned int Int64SubAsign(struct Expression * exp, struct Operand * op1,
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 -= value2);
+exp->string = PrintInt64((op1->i64 -= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7236,7 +7248,7 @@ static unsigned int UInt64SubAsign(struct Expression * exp, struct Operand * op1
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 -= value2);
+exp->string = PrintUInt64((op1->ui64 -= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7251,7 +7263,7 @@ static unsigned int ShortSubAsign(struct Expression * exp, struct Operand * op1,
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s -= value2);
+exp->string = PrintShort((op1->s -= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7266,7 +7278,7 @@ static unsigned int UShortSubAsign(struct Expression * exp, struct Operand * op1
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us -= value2);
+exp->string = PrintUShort((op1->us -= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7281,7 +7293,7 @@ static unsigned int CharSubAsign(struct Expression * exp, struct Operand * op1, 
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c -= value2);
+exp->string = PrintChar((op1->c -= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7296,7 +7308,7 @@ static unsigned int UCharSubAsign(struct Expression * exp, struct Operand * op1,
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc -= value2);
+exp->string = PrintUChar((op1->uc -= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7311,7 +7323,7 @@ static unsigned int FloatSubAsign(struct Expression * exp, struct Operand * op1,
 float value2 = op2->f;
 
 exp->type = 2;
-exp->string = PrintFloat(op1->f -= value2);
+exp->string = PrintFloat((float)(op1->f -= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7326,7 +7338,7 @@ static unsigned int DoubleSubAsign(struct Expression * exp, struct Operand * op1
 double value2 = op2->d;
 
 exp->type = 2;
-exp->string = PrintDouble(op1->d -= value2);
+exp->string = PrintDouble((double)(op1->d -= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7341,7 +7353,7 @@ static unsigned int IntMulAsign(struct Expression * exp, struct Operand * op1, s
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i *= value2);
+exp->string = PrintInt((op1->i *= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7356,7 +7368,7 @@ static unsigned int UIntMulAsign(struct Expression * exp, struct Operand * op1, 
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui *= value2);
+exp->string = PrintUInt((op1->ui *= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7371,7 +7383,7 @@ static unsigned int Int64MulAsign(struct Expression * exp, struct Operand * op1,
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 *= value2);
+exp->string = PrintInt64((op1->i64 *= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7386,7 +7398,7 @@ static unsigned int UInt64MulAsign(struct Expression * exp, struct Operand * op1
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 *= value2);
+exp->string = PrintUInt64((op1->ui64 *= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7401,7 +7413,7 @@ static unsigned int ShortMulAsign(struct Expression * exp, struct Operand * op1,
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s *= value2);
+exp->string = PrintShort((op1->s *= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7416,7 +7428,7 @@ static unsigned int UShortMulAsign(struct Expression * exp, struct Operand * op1
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us *= value2);
+exp->string = PrintUShort((op1->us *= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7431,7 +7443,7 @@ static unsigned int CharMulAsign(struct Expression * exp, struct Operand * op1, 
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c *= value2);
+exp->string = PrintChar((op1->c *= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7446,7 +7458,7 @@ static unsigned int UCharMulAsign(struct Expression * exp, struct Operand * op1,
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc *= value2);
+exp->string = PrintUChar((op1->uc *= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7461,7 +7473,7 @@ static unsigned int FloatMulAsign(struct Expression * exp, struct Operand * op1,
 float value2 = op2->f;
 
 exp->type = 2;
-exp->string = PrintFloat(op1->f *= value2);
+exp->string = PrintFloat((float)(op1->f *= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7476,7 +7488,7 @@ static unsigned int DoubleMulAsign(struct Expression * exp, struct Operand * op1
 double value2 = op2->d;
 
 exp->type = 2;
-exp->string = PrintDouble(op1->d *= value2);
+exp->string = PrintDouble((double)(op1->d *= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7761,7 +7773,7 @@ static unsigned int IntBitAnd(struct Expression * exp, struct Operand * op1, str
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i & value2);
+exp->string = PrintInt((op1->i & value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7776,7 +7788,7 @@ static unsigned int UIntBitAnd(struct Expression * exp, struct Operand * op1, st
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui & value2);
+exp->string = PrintUInt((op1->ui & value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7791,7 +7803,7 @@ static unsigned int Int64BitAnd(struct Expression * exp, struct Operand * op1, s
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 & value2);
+exp->string = PrintInt64((op1->i64 & value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7806,7 +7818,7 @@ static unsigned int UInt64BitAnd(struct Expression * exp, struct Operand * op1, 
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 & value2);
+exp->string = PrintUInt64((op1->ui64 & value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7821,7 +7833,7 @@ static unsigned int ShortBitAnd(struct Expression * exp, struct Operand * op1, s
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s & value2);
+exp->string = PrintShort((op1->s & value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7836,7 +7848,7 @@ static unsigned int UShortBitAnd(struct Expression * exp, struct Operand * op1, 
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us & value2);
+exp->string = PrintUShort((op1->us & value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7851,7 +7863,7 @@ static unsigned int CharBitAnd(struct Expression * exp, struct Operand * op1, st
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c & value2);
+exp->string = PrintChar((op1->c & value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7866,7 +7878,7 @@ static unsigned int UCharBitAnd(struct Expression * exp, struct Operand * op1, s
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc & value2);
+exp->string = PrintUChar((op1->uc & value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7881,7 +7893,7 @@ static unsigned int IntBitOr(struct Expression * exp, struct Operand * op1, stru
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i | value2);
+exp->string = PrintInt((op1->i | value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7896,7 +7908,7 @@ static unsigned int UIntBitOr(struct Expression * exp, struct Operand * op1, str
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui | value2);
+exp->string = PrintUInt((op1->ui | value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7911,7 +7923,7 @@ static unsigned int Int64BitOr(struct Expression * exp, struct Operand * op1, st
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 | value2);
+exp->string = PrintInt64((op1->i64 | value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7926,7 +7938,7 @@ static unsigned int UInt64BitOr(struct Expression * exp, struct Operand * op1, s
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 | value2);
+exp->string = PrintUInt64((op1->ui64 | value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7941,7 +7953,7 @@ static unsigned int ShortBitOr(struct Expression * exp, struct Operand * op1, st
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s | value2);
+exp->string = PrintShort((op1->s | value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7956,7 +7968,7 @@ static unsigned int UShortBitOr(struct Expression * exp, struct Operand * op1, s
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us | value2);
+exp->string = PrintUShort((op1->us | value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7971,7 +7983,7 @@ static unsigned int CharBitOr(struct Expression * exp, struct Operand * op1, str
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c | value2);
+exp->string = PrintChar((op1->c | value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -7986,7 +7998,7 @@ static unsigned int UCharBitOr(struct Expression * exp, struct Operand * op1, st
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc | value2);
+exp->string = PrintUChar((op1->uc | value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8001,7 +8013,7 @@ static unsigned int IntBitXor(struct Expression * exp, struct Operand * op1, str
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i ^ value2);
+exp->string = PrintInt((op1->i ^ value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8016,7 +8028,7 @@ static unsigned int UIntBitXor(struct Expression * exp, struct Operand * op1, st
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui ^ value2);
+exp->string = PrintUInt((op1->ui ^ value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8031,7 +8043,7 @@ static unsigned int Int64BitXor(struct Expression * exp, struct Operand * op1, s
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 ^ value2);
+exp->string = PrintInt64((op1->i64 ^ value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8046,7 +8058,7 @@ static unsigned int UInt64BitXor(struct Expression * exp, struct Operand * op1, 
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 ^ value2);
+exp->string = PrintUInt64((op1->ui64 ^ value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8061,7 +8073,7 @@ static unsigned int ShortBitXor(struct Expression * exp, struct Operand * op1, s
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s ^ value2);
+exp->string = PrintShort((op1->s ^ value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8076,7 +8088,7 @@ static unsigned int UShortBitXor(struct Expression * exp, struct Operand * op1, 
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us ^ value2);
+exp->string = PrintUShort((op1->us ^ value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8091,7 +8103,7 @@ static unsigned int CharBitXor(struct Expression * exp, struct Operand * op1, st
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c ^ value2);
+exp->string = PrintChar((op1->c ^ value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8106,7 +8118,7 @@ static unsigned int UCharBitXor(struct Expression * exp, struct Operand * op1, s
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc ^ value2);
+exp->string = PrintUChar((op1->uc ^ value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8121,7 +8133,7 @@ static unsigned int IntLShift(struct Expression * exp, struct Operand * op1, str
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i << value2);
+exp->string = PrintInt((op1->i << value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8136,7 +8148,7 @@ static unsigned int UIntLShift(struct Expression * exp, struct Operand * op1, st
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui << value2);
+exp->string = PrintUInt((op1->ui << value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8151,7 +8163,7 @@ static unsigned int Int64LShift(struct Expression * exp, struct Operand * op1, s
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 << value2);
+exp->string = PrintInt64((op1->i64 << value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8166,7 +8178,7 @@ static unsigned int UInt64LShift(struct Expression * exp, struct Operand * op1, 
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 << value2);
+exp->string = PrintUInt64((op1->ui64 << value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8181,7 +8193,7 @@ static unsigned int ShortLShift(struct Expression * exp, struct Operand * op1, s
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s << value2);
+exp->string = PrintShort((op1->s << value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8196,7 +8208,7 @@ static unsigned int UShortLShift(struct Expression * exp, struct Operand * op1, 
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us << value2);
+exp->string = PrintUShort((op1->us << value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8211,7 +8223,7 @@ static unsigned int CharLShift(struct Expression * exp, struct Operand * op1, st
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c << value2);
+exp->string = PrintChar((op1->c << value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8226,7 +8238,7 @@ static unsigned int UCharLShift(struct Expression * exp, struct Operand * op1, s
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc << value2);
+exp->string = PrintUChar((op1->uc << value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8241,7 +8253,7 @@ static unsigned int IntRShift(struct Expression * exp, struct Operand * op1, str
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i >> value2);
+exp->string = PrintInt((op1->i >> value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8256,7 +8268,7 @@ static unsigned int UIntRShift(struct Expression * exp, struct Operand * op1, st
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui >> value2);
+exp->string = PrintUInt((op1->ui >> value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8271,7 +8283,7 @@ static unsigned int Int64RShift(struct Expression * exp, struct Operand * op1, s
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 >> value2);
+exp->string = PrintInt64((op1->i64 >> value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8286,7 +8298,7 @@ static unsigned int UInt64RShift(struct Expression * exp, struct Operand * op1, 
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 >> value2);
+exp->string = PrintUInt64((op1->ui64 >> value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8301,7 +8313,7 @@ static unsigned int ShortRShift(struct Expression * exp, struct Operand * op1, s
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s >> value2);
+exp->string = PrintShort((op1->s >> value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8316,7 +8328,7 @@ static unsigned int UShortRShift(struct Expression * exp, struct Operand * op1, 
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us >> value2);
+exp->string = PrintUShort((op1->us >> value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8331,7 +8343,7 @@ static unsigned int CharRShift(struct Expression * exp, struct Operand * op1, st
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c >> value2);
+exp->string = PrintChar((op1->c >> value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8346,7 +8358,7 @@ static unsigned int UCharRShift(struct Expression * exp, struct Operand * op1, s
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc >> value2);
+exp->string = PrintUChar((op1->uc >> value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8465,7 +8477,7 @@ static unsigned int IntAndAsign(struct Expression * exp, struct Operand * op1, s
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i &= value2);
+exp->string = PrintInt((op1->i &= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8480,7 +8492,7 @@ static unsigned int UIntAndAsign(struct Expression * exp, struct Operand * op1, 
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui &= value2);
+exp->string = PrintUInt((op1->ui &= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8495,7 +8507,7 @@ static unsigned int Int64AndAsign(struct Expression * exp, struct Operand * op1,
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 &= value2);
+exp->string = PrintInt64((op1->i64 &= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8510,7 +8522,7 @@ static unsigned int UInt64AndAsign(struct Expression * exp, struct Operand * op1
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 &= value2);
+exp->string = PrintUInt64((op1->ui64 &= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8525,7 +8537,7 @@ static unsigned int ShortAndAsign(struct Expression * exp, struct Operand * op1,
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s &= value2);
+exp->string = PrintShort((op1->s &= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8540,7 +8552,7 @@ static unsigned int UShortAndAsign(struct Expression * exp, struct Operand * op1
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us &= value2);
+exp->string = PrintUShort((op1->us &= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8555,7 +8567,7 @@ static unsigned int CharAndAsign(struct Expression * exp, struct Operand * op1, 
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c &= value2);
+exp->string = PrintChar((op1->c &= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8570,7 +8582,7 @@ static unsigned int UCharAndAsign(struct Expression * exp, struct Operand * op1,
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc &= value2);
+exp->string = PrintUChar((op1->uc &= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8585,7 +8597,7 @@ static unsigned int IntOrAsign(struct Expression * exp, struct Operand * op1, st
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i |= value2);
+exp->string = PrintInt((op1->i |= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8600,7 +8612,7 @@ static unsigned int UIntOrAsign(struct Expression * exp, struct Operand * op1, s
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui |= value2);
+exp->string = PrintUInt((op1->ui |= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8615,7 +8627,7 @@ static unsigned int Int64OrAsign(struct Expression * exp, struct Operand * op1, 
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 |= value2);
+exp->string = PrintInt64((op1->i64 |= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8630,7 +8642,7 @@ static unsigned int UInt64OrAsign(struct Expression * exp, struct Operand * op1,
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 |= value2);
+exp->string = PrintUInt64((op1->ui64 |= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8645,7 +8657,7 @@ static unsigned int ShortOrAsign(struct Expression * exp, struct Operand * op1, 
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s |= value2);
+exp->string = PrintShort((op1->s |= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8660,7 +8672,7 @@ static unsigned int UShortOrAsign(struct Expression * exp, struct Operand * op1,
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us |= value2);
+exp->string = PrintUShort((op1->us |= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8675,7 +8687,7 @@ static unsigned int CharOrAsign(struct Expression * exp, struct Operand * op1, s
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c |= value2);
+exp->string = PrintChar((op1->c |= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8690,7 +8702,7 @@ static unsigned int UCharOrAsign(struct Expression * exp, struct Operand * op1, 
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc |= value2);
+exp->string = PrintUChar((op1->uc |= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8705,7 +8717,7 @@ static unsigned int IntXorAsign(struct Expression * exp, struct Operand * op1, s
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i ^= value2);
+exp->string = PrintInt((op1->i ^= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8720,7 +8732,7 @@ static unsigned int UIntXorAsign(struct Expression * exp, struct Operand * op1, 
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui ^= value2);
+exp->string = PrintUInt((op1->ui ^= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8735,7 +8747,7 @@ static unsigned int Int64XorAsign(struct Expression * exp, struct Operand * op1,
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 ^= value2);
+exp->string = PrintInt64((op1->i64 ^= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8750,7 +8762,7 @@ static unsigned int UInt64XorAsign(struct Expression * exp, struct Operand * op1
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 ^= value2);
+exp->string = PrintUInt64((op1->ui64 ^= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8765,7 +8777,7 @@ static unsigned int ShortXorAsign(struct Expression * exp, struct Operand * op1,
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s ^= value2);
+exp->string = PrintShort((op1->s ^= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8780,7 +8792,7 @@ static unsigned int UShortXorAsign(struct Expression * exp, struct Operand * op1
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us ^= value2);
+exp->string = PrintUShort((op1->us ^= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8795,7 +8807,7 @@ static unsigned int CharXorAsign(struct Expression * exp, struct Operand * op1, 
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c ^= value2);
+exp->string = PrintChar((op1->c ^= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8810,7 +8822,7 @@ static unsigned int UCharXorAsign(struct Expression * exp, struct Operand * op1,
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc ^= value2);
+exp->string = PrintUChar((op1->uc ^= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8825,7 +8837,7 @@ static unsigned int IntLShiftAsign(struct Expression * exp, struct Operand * op1
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i <<= value2);
+exp->string = PrintInt((op1->i <<= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8840,7 +8852,7 @@ static unsigned int UIntLShiftAsign(struct Expression * exp, struct Operand * op
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui <<= value2);
+exp->string = PrintUInt((op1->ui <<= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8855,7 +8867,7 @@ static unsigned int Int64LShiftAsign(struct Expression * exp, struct Operand * o
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 <<= value2);
+exp->string = PrintInt64((op1->i64 <<= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8870,7 +8882,7 @@ static unsigned int UInt64LShiftAsign(struct Expression * exp, struct Operand * 
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 <<= value2);
+exp->string = PrintUInt64((op1->ui64 <<= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8885,7 +8897,7 @@ static unsigned int ShortLShiftAsign(struct Expression * exp, struct Operand * o
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s <<= value2);
+exp->string = PrintShort((op1->s <<= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8900,7 +8912,7 @@ static unsigned int UShortLShiftAsign(struct Expression * exp, struct Operand * 
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us <<= value2);
+exp->string = PrintUShort((op1->us <<= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8915,7 +8927,7 @@ static unsigned int CharLShiftAsign(struct Expression * exp, struct Operand * op
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c <<= value2);
+exp->string = PrintChar((op1->c <<= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8930,7 +8942,7 @@ static unsigned int UCharLShiftAsign(struct Expression * exp, struct Operand * o
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc <<= value2);
+exp->string = PrintUChar((op1->uc <<= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8945,7 +8957,7 @@ static unsigned int IntRShiftAsign(struct Expression * exp, struct Operand * op1
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i >>= value2);
+exp->string = PrintInt((op1->i >>= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8960,7 +8972,7 @@ static unsigned int UIntRShiftAsign(struct Expression * exp, struct Operand * op
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui >>= value2);
+exp->string = PrintUInt((op1->ui >>= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8975,7 +8987,7 @@ static unsigned int Int64RShiftAsign(struct Expression * exp, struct Operand * o
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 >>= value2);
+exp->string = PrintInt64((op1->i64 >>= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -8990,7 +9002,7 @@ static unsigned int UInt64RShiftAsign(struct Expression * exp, struct Operand * 
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 >>= value2);
+exp->string = PrintUInt64((op1->ui64 >>= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9005,7 +9017,7 @@ static unsigned int ShortRShiftAsign(struct Expression * exp, struct Operand * o
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s >>= value2);
+exp->string = PrintShort((op1->s >>= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9020,7 +9032,7 @@ static unsigned int UShortRShiftAsign(struct Expression * exp, struct Operand * 
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us >>= value2);
+exp->string = PrintUShort((op1->us >>= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9035,7 +9047,7 @@ static unsigned int CharRShiftAsign(struct Expression * exp, struct Operand * op
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c >>= value2);
+exp->string = PrintChar((op1->c >>= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9050,7 +9062,7 @@ static unsigned int UCharRShiftAsign(struct Expression * exp, struct Operand * o
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc >>= value2);
+exp->string = PrintUChar((op1->uc >>= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9169,7 +9181,7 @@ static unsigned int IntEqu(struct Expression * exp, struct Operand * op1, struct
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i == value2);
+exp->string = PrintInt((int)(op1->i == value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9184,7 +9196,7 @@ static unsigned int UIntEqu(struct Expression * exp, struct Operand * op1, struc
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui == value2);
+exp->string = PrintUInt((unsigned int)(op1->ui == value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9199,7 +9211,7 @@ static unsigned int Int64Equ(struct Expression * exp, struct Operand * op1, stru
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 == value2);
+exp->string = PrintInt64((long long)(op1->i64 == value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9214,7 +9226,7 @@ static unsigned int UInt64Equ(struct Expression * exp, struct Operand * op1, str
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 == value2);
+exp->string = PrintUInt64((uint64)(op1->ui64 == value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9229,7 +9241,7 @@ static unsigned int ShortEqu(struct Expression * exp, struct Operand * op1, stru
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s == value2);
+exp->string = PrintShort((short)(op1->s == value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9244,7 +9256,7 @@ static unsigned int UShortEqu(struct Expression * exp, struct Operand * op1, str
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us == value2);
+exp->string = PrintUShort((unsigned short)(op1->us == value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9259,7 +9271,7 @@ static unsigned int CharEqu(struct Expression * exp, struct Operand * op1, struc
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c == value2);
+exp->string = PrintChar((char)(op1->c == value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9274,7 +9286,7 @@ static unsigned int UCharEqu(struct Expression * exp, struct Operand * op1, stru
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc == value2);
+exp->string = PrintUChar((unsigned char)(op1->uc == value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9289,7 +9301,7 @@ static unsigned int FloatEqu(struct Expression * exp, struct Operand * op1, stru
 float value2 = op2->f;
 
 exp->type = 2;
-exp->string = PrintFloat(op1->f == value2);
+exp->string = PrintFloat((float)(op1->f == value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9304,7 +9316,7 @@ static unsigned int DoubleEqu(struct Expression * exp, struct Operand * op1, str
 double value2 = op2->d;
 
 exp->type = 2;
-exp->string = PrintDouble(op1->d == value2);
+exp->string = PrintDouble((double)(op1->d == value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9319,7 +9331,7 @@ static unsigned int IntNqu(struct Expression * exp, struct Operand * op1, struct
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i != value2);
+exp->string = PrintInt((int)(op1->i != value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9334,7 +9346,7 @@ static unsigned int UIntNqu(struct Expression * exp, struct Operand * op1, struc
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui != value2);
+exp->string = PrintUInt((unsigned int)(op1->ui != value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9349,7 +9361,7 @@ static unsigned int Int64Nqu(struct Expression * exp, struct Operand * op1, stru
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 != value2);
+exp->string = PrintInt64((long long)(op1->i64 != value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9364,7 +9376,7 @@ static unsigned int UInt64Nqu(struct Expression * exp, struct Operand * op1, str
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 != value2);
+exp->string = PrintUInt64((uint64)(op1->ui64 != value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9379,7 +9391,7 @@ static unsigned int ShortNqu(struct Expression * exp, struct Operand * op1, stru
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s != value2);
+exp->string = PrintShort((short)(op1->s != value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9394,7 +9406,7 @@ static unsigned int UShortNqu(struct Expression * exp, struct Operand * op1, str
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us != value2);
+exp->string = PrintUShort((unsigned short)(op1->us != value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9409,7 +9421,7 @@ static unsigned int CharNqu(struct Expression * exp, struct Operand * op1, struc
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c != value2);
+exp->string = PrintChar((char)(op1->c != value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9424,7 +9436,7 @@ static unsigned int UCharNqu(struct Expression * exp, struct Operand * op1, stru
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc != value2);
+exp->string = PrintUChar((unsigned char)(op1->uc != value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9439,7 +9451,7 @@ static unsigned int FloatNqu(struct Expression * exp, struct Operand * op1, stru
 float value2 = op2->f;
 
 exp->type = 2;
-exp->string = PrintFloat(op1->f != value2);
+exp->string = PrintFloat((float)(op1->f != value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9454,7 +9466,7 @@ static unsigned int DoubleNqu(struct Expression * exp, struct Operand * op1, str
 double value2 = op2->d;
 
 exp->type = 2;
-exp->string = PrintDouble(op1->d != value2);
+exp->string = PrintDouble((double)(op1->d != value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9469,7 +9481,7 @@ static unsigned int IntAnd(struct Expression * exp, struct Operand * op1, struct
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i && value2);
+exp->string = PrintInt((int)(op1->i && value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9484,7 +9496,7 @@ static unsigned int UIntAnd(struct Expression * exp, struct Operand * op1, struc
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui && value2);
+exp->string = PrintUInt((unsigned int)(op1->ui && value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9499,7 +9511,7 @@ static unsigned int Int64And(struct Expression * exp, struct Operand * op1, stru
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 && value2);
+exp->string = PrintInt64((long long)(op1->i64 && value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9514,7 +9526,7 @@ static unsigned int UInt64And(struct Expression * exp, struct Operand * op1, str
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 && value2);
+exp->string = PrintUInt64((uint64)(op1->ui64 && value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9529,7 +9541,7 @@ static unsigned int ShortAnd(struct Expression * exp, struct Operand * op1, stru
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s && value2);
+exp->string = PrintShort((short)(op1->s && value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9544,7 +9556,7 @@ static unsigned int UShortAnd(struct Expression * exp, struct Operand * op1, str
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us && value2);
+exp->string = PrintUShort((unsigned short)(op1->us && value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9559,7 +9571,7 @@ static unsigned int CharAnd(struct Expression * exp, struct Operand * op1, struc
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c && value2);
+exp->string = PrintChar((char)(op1->c && value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9574,7 +9586,7 @@ static unsigned int UCharAnd(struct Expression * exp, struct Operand * op1, stru
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc && value2);
+exp->string = PrintUChar((unsigned char)(op1->uc && value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9589,7 +9601,7 @@ static unsigned int FloatAnd(struct Expression * exp, struct Operand * op1, stru
 float value2 = op2->f;
 
 exp->type = 2;
-exp->string = PrintFloat(op1->f && value2);
+exp->string = PrintFloat((float)(op1->f && value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9604,7 +9616,7 @@ static unsigned int DoubleAnd(struct Expression * exp, struct Operand * op1, str
 double value2 = op2->d;
 
 exp->type = 2;
-exp->string = PrintDouble(op1->d && value2);
+exp->string = PrintDouble((double)(op1->d && value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9619,7 +9631,7 @@ static unsigned int IntOr(struct Expression * exp, struct Operand * op1, struct 
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i || value2);
+exp->string = PrintInt((int)(op1->i || value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9634,7 +9646,7 @@ static unsigned int UIntOr(struct Expression * exp, struct Operand * op1, struct
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui || value2);
+exp->string = PrintUInt((unsigned int)(op1->ui || value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9649,7 +9661,7 @@ static unsigned int Int64Or(struct Expression * exp, struct Operand * op1, struc
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 || value2);
+exp->string = PrintInt64((long long)(op1->i64 || value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9664,7 +9676,7 @@ static unsigned int UInt64Or(struct Expression * exp, struct Operand * op1, stru
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 || value2);
+exp->string = PrintUInt64((uint64)(op1->ui64 || value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9679,7 +9691,7 @@ static unsigned int ShortOr(struct Expression * exp, struct Operand * op1, struc
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s || value2);
+exp->string = PrintShort((short)(op1->s || value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9694,7 +9706,7 @@ static unsigned int UShortOr(struct Expression * exp, struct Operand * op1, stru
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us || value2);
+exp->string = PrintUShort((unsigned short)(op1->us || value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9709,7 +9721,7 @@ static unsigned int CharOr(struct Expression * exp, struct Operand * op1, struct
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c || value2);
+exp->string = PrintChar((char)(op1->c || value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9724,7 +9736,7 @@ static unsigned int UCharOr(struct Expression * exp, struct Operand * op1, struc
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc || value2);
+exp->string = PrintUChar((unsigned char)(op1->uc || value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9739,7 +9751,7 @@ static unsigned int FloatOr(struct Expression * exp, struct Operand * op1, struc
 float value2 = op2->f;
 
 exp->type = 2;
-exp->string = PrintFloat(op1->f || value2);
+exp->string = PrintFloat((float)(op1->f || value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9754,7 +9766,7 @@ static unsigned int DoubleOr(struct Expression * exp, struct Operand * op1, stru
 double value2 = op2->d;
 
 exp->type = 2;
-exp->string = PrintDouble(op1->d || value2);
+exp->string = PrintDouble((double)(op1->d || value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9769,7 +9781,7 @@ static unsigned int IntGrt(struct Expression * exp, struct Operand * op1, struct
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i > value2);
+exp->string = PrintInt((int)(op1->i > value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9784,7 +9796,7 @@ static unsigned int UIntGrt(struct Expression * exp, struct Operand * op1, struc
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui > value2);
+exp->string = PrintUInt((unsigned int)(op1->ui > value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9799,7 +9811,7 @@ static unsigned int Int64Grt(struct Expression * exp, struct Operand * op1, stru
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 > value2);
+exp->string = PrintInt64((long long)(op1->i64 > value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9814,7 +9826,7 @@ static unsigned int UInt64Grt(struct Expression * exp, struct Operand * op1, str
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 > value2);
+exp->string = PrintUInt64((uint64)(op1->ui64 > value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9829,7 +9841,7 @@ static unsigned int ShortGrt(struct Expression * exp, struct Operand * op1, stru
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s > value2);
+exp->string = PrintShort((short)(op1->s > value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9844,7 +9856,7 @@ static unsigned int UShortGrt(struct Expression * exp, struct Operand * op1, str
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us > value2);
+exp->string = PrintUShort((unsigned short)(op1->us > value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9859,7 +9871,7 @@ static unsigned int CharGrt(struct Expression * exp, struct Operand * op1, struc
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c > value2);
+exp->string = PrintChar((char)(op1->c > value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9874,7 +9886,7 @@ static unsigned int UCharGrt(struct Expression * exp, struct Operand * op1, stru
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc > value2);
+exp->string = PrintUChar((unsigned char)(op1->uc > value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9889,7 +9901,7 @@ static unsigned int FloatGrt(struct Expression * exp, struct Operand * op1, stru
 float value2 = op2->f;
 
 exp->type = 2;
-exp->string = PrintFloat(op1->f > value2);
+exp->string = PrintFloat((float)(op1->f > value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9904,7 +9916,7 @@ static unsigned int DoubleGrt(struct Expression * exp, struct Operand * op1, str
 double value2 = op2->d;
 
 exp->type = 2;
-exp->string = PrintDouble(op1->d > value2);
+exp->string = PrintDouble((double)(op1->d > value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9919,7 +9931,7 @@ static unsigned int IntSma(struct Expression * exp, struct Operand * op1, struct
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i < value2);
+exp->string = PrintInt((int)(op1->i < value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9934,7 +9946,7 @@ static unsigned int UIntSma(struct Expression * exp, struct Operand * op1, struc
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui < value2);
+exp->string = PrintUInt((unsigned int)(op1->ui < value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9949,7 +9961,7 @@ static unsigned int Int64Sma(struct Expression * exp, struct Operand * op1, stru
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 < value2);
+exp->string = PrintInt64((long long)(op1->i64 < value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9964,7 +9976,7 @@ static unsigned int UInt64Sma(struct Expression * exp, struct Operand * op1, str
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 < value2);
+exp->string = PrintUInt64((uint64)(op1->ui64 < value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9979,7 +9991,7 @@ static unsigned int ShortSma(struct Expression * exp, struct Operand * op1, stru
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s < value2);
+exp->string = PrintShort((short)(op1->s < value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -9994,7 +10006,7 @@ static unsigned int UShortSma(struct Expression * exp, struct Operand * op1, str
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us < value2);
+exp->string = PrintUShort((unsigned short)(op1->us < value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10009,7 +10021,7 @@ static unsigned int CharSma(struct Expression * exp, struct Operand * op1, struc
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c < value2);
+exp->string = PrintChar((char)(op1->c < value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10024,7 +10036,7 @@ static unsigned int UCharSma(struct Expression * exp, struct Operand * op1, stru
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc < value2);
+exp->string = PrintUChar((unsigned char)(op1->uc < value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10039,7 +10051,7 @@ static unsigned int FloatSma(struct Expression * exp, struct Operand * op1, stru
 float value2 = op2->f;
 
 exp->type = 2;
-exp->string = PrintFloat(op1->f < value2);
+exp->string = PrintFloat((float)(op1->f < value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10054,7 +10066,7 @@ static unsigned int DoubleSma(struct Expression * exp, struct Operand * op1, str
 double value2 = op2->d;
 
 exp->type = 2;
-exp->string = PrintDouble(op1->d < value2);
+exp->string = PrintDouble((double)(op1->d < value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10069,7 +10081,7 @@ static unsigned int IntGrtEqu(struct Expression * exp, struct Operand * op1, str
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i >= value2);
+exp->string = PrintInt((int)(op1->i >= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10084,7 +10096,7 @@ static unsigned int UIntGrtEqu(struct Expression * exp, struct Operand * op1, st
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui >= value2);
+exp->string = PrintUInt((unsigned int)(op1->ui >= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10099,7 +10111,7 @@ static unsigned int Int64GrtEqu(struct Expression * exp, struct Operand * op1, s
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 >= value2);
+exp->string = PrintInt64((long long)(op1->i64 >= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10114,7 +10126,7 @@ static unsigned int UInt64GrtEqu(struct Expression * exp, struct Operand * op1, 
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 >= value2);
+exp->string = PrintUInt64((uint64)(op1->ui64 >= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10129,7 +10141,7 @@ static unsigned int ShortGrtEqu(struct Expression * exp, struct Operand * op1, s
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s >= value2);
+exp->string = PrintShort((short)(op1->s >= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10144,7 +10156,7 @@ static unsigned int UShortGrtEqu(struct Expression * exp, struct Operand * op1, 
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us >= value2);
+exp->string = PrintUShort((unsigned short)(op1->us >= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10159,7 +10171,7 @@ static unsigned int CharGrtEqu(struct Expression * exp, struct Operand * op1, st
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c >= value2);
+exp->string = PrintChar((char)(op1->c >= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10174,7 +10186,7 @@ static unsigned int UCharGrtEqu(struct Expression * exp, struct Operand * op1, s
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc >= value2);
+exp->string = PrintUChar((unsigned char)(op1->uc >= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10189,7 +10201,7 @@ static unsigned int FloatGrtEqu(struct Expression * exp, struct Operand * op1, s
 float value2 = op2->f;
 
 exp->type = 2;
-exp->string = PrintFloat(op1->f >= value2);
+exp->string = PrintFloat((float)(op1->f >= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10204,7 +10216,7 @@ static unsigned int DoubleGrtEqu(struct Expression * exp, struct Operand * op1, 
 double value2 = op2->d;
 
 exp->type = 2;
-exp->string = PrintDouble(op1->d >= value2);
+exp->string = PrintDouble((double)(op1->d >= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10219,7 +10231,7 @@ static unsigned int IntSmaEqu(struct Expression * exp, struct Operand * op1, str
 int value2 = op2->i;
 
 exp->type = 2;
-exp->string = PrintInt(op1->i <= value2);
+exp->string = PrintInt((int)(op1->i <= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10234,7 +10246,7 @@ static unsigned int UIntSmaEqu(struct Expression * exp, struct Operand * op1, st
 unsigned int value2 = op2->ui;
 
 exp->type = 2;
-exp->string = PrintUInt(op1->ui <= value2);
+exp->string = PrintUInt((unsigned int)(op1->ui <= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10249,7 +10261,7 @@ static unsigned int Int64SmaEqu(struct Expression * exp, struct Operand * op1, s
 long long value2 = op2->i64;
 
 exp->type = 2;
-exp->string = PrintInt64(op1->i64 <= value2);
+exp->string = PrintInt64((long long)(op1->i64 <= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10264,7 +10276,7 @@ static unsigned int UInt64SmaEqu(struct Expression * exp, struct Operand * op1, 
 uint64 value2 = op2->ui64;
 
 exp->type = 2;
-exp->string = PrintUInt64(op1->ui64 <= value2);
+exp->string = PrintUInt64((uint64)(op1->ui64 <= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10279,7 +10291,7 @@ static unsigned int ShortSmaEqu(struct Expression * exp, struct Operand * op1, s
 short value2 = op2->s;
 
 exp->type = 2;
-exp->string = PrintShort(op1->s <= value2);
+exp->string = PrintShort((short)(op1->s <= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10294,7 +10306,7 @@ static unsigned int UShortSmaEqu(struct Expression * exp, struct Operand * op1, 
 unsigned short value2 = op2->us;
 
 exp->type = 2;
-exp->string = PrintUShort(op1->us <= value2);
+exp->string = PrintUShort((unsigned short)(op1->us <= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10309,7 +10321,7 @@ static unsigned int CharSmaEqu(struct Expression * exp, struct Operand * op1, st
 char value2 = op2->c;
 
 exp->type = 2;
-exp->string = PrintChar(op1->c <= value2);
+exp->string = PrintChar((char)(op1->c <= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10324,7 +10336,7 @@ static unsigned int UCharSmaEqu(struct Expression * exp, struct Operand * op1, s
 unsigned char value2 = op2->uc;
 
 exp->type = 2;
-exp->string = PrintUChar(op1->uc <= value2);
+exp->string = PrintUChar((unsigned char)(op1->uc <= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10339,7 +10351,7 @@ static unsigned int FloatSmaEqu(struct Expression * exp, struct Operand * op1, s
 float value2 = op2->f;
 
 exp->type = 2;
-exp->string = PrintFloat(op1->f <= value2);
+exp->string = PrintFloat((float)(op1->f <= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -10354,7 +10366,7 @@ static unsigned int DoubleSmaEqu(struct Expression * exp, struct Operand * op1, 
 double value2 = op2->d;
 
 exp->type = 2;
-exp->string = PrintDouble(op1->d <= value2);
+exp->string = PrintDouble((double)(op1->d <= value2));
 if(!exp->expType)
 {
 exp->expType = op1->type;
@@ -14201,6 +14213,7 @@ struct Type * type1 = (((void *)0)), * type2 = (((void *)0));
 unsigned int useDestType = 0x0, useSideType = 0x0;
 struct Location oldyylloc = yylloc;
 unsigned int useSideUnit = 0x0;
+struct __ecereNameSpace__ecere__com__Class * destClass = (exp->destType && exp->destType->kind == 8 && exp->destType->_class) ? exp->destType->_class->registered : (((void *)0));
 struct Type * dummy = (dummy = __ecereNameSpace__ecere__com__eInstance_New(__ecereClass_Type), dummy->count = 1, dummy->refCount = 1, dummy);
 
 switch(exp->op.op)
@@ -14237,13 +14250,27 @@ break;
 case '+':
 case '-':
 useSideUnit = 0x1;
+useSideType = 0x1;
+useDestType = 0x1;
+break;
+case LEFT_OP:
+case RIGHT_OP:
+useSideType = 0x1;
+useDestType = 0x1;
+break;
 case '|':
-case '&':
 case '^':
+useSideType = 0x1;
+useDestType = 0x1;
+break;
 case '/':
 case '%':
+useSideType = 0x1;
+useDestType = 0x1;
+break;
+case '&':
 case '*':
-if(exp->op.op != '*' || exp->op.exp1)
+if(exp->op.exp1)
 {
 useSideType = 0x1;
 useDestType = 0x1;
@@ -14273,7 +14300,9 @@ break;
 }
 if(exp->op.exp1)
 {
-if(exp->destType && exp->destType->kind == 8 && exp->destType->_class && exp->destType->_class->registered && useDestType && ((exp->destType->_class->registered->type == 3 && useSideUnit) || exp->destType->_class->registered->type == 4 || exp->destType->_class->registered->type == 2))
+if(exp->op.exp2 && useSideUnit && useDestType && destClass && destClass->type == 3 && destClass->base->type != 3)
+useDestType = 0x0;
+if(destClass && useDestType && ((destClass->type == 3 && useSideUnit) || destClass->type == 4 || destClass->type == 2))
 {
 if(exp->op.exp1->destType)
 FreeType(exp->op.exp1->destType);
@@ -14363,7 +14392,7 @@ if(type1)
 type1->refCount++;
 exp->expType = type1;
 }
-else if(exp->destType && exp->destType->kind == 8 && exp->destType->_class && exp->destType->_class->registered && ((exp->destType->_class->registered->type == 3 && useDestType && useSideUnit) || (exp->destType->_class->registered->type == 4 && useDestType)))
+else if(destClass && ((destClass->type == 3 && useDestType && useSideUnit) || (destClass->type == 4 && useDestType)))
 {
 if(exp->op.exp2->destType)
 FreeType(exp->op.exp2->destType);
@@ -14520,6 +14549,25 @@ else if(exp->op.exp1 && exp->op.exp2 && ((useSideType) || ((!type1 || type1->kin
 {
 if(type1 && type2 && ((type1->kind == 8 && type1->_class && strcmp(type1->_class->string, "String")) == (type2->kind == 8 && type2->_class && strcmp(type2->_class->string, "String"))))
 {
+if(exp->op.op == '-' && ((type1->kind == 8 && type1->_class->registered && type1->_class->registered->type == 4) || (type2->kind == 8 && type2->_class->registered && type2->_class->registered->type == 4)))
+{
+struct Type * intType;
+
+if(!type1->_class->registered->dataType)
+type1->_class->registered->dataType = ProcessTypeString(type1->_class->registered->dataTypeString, 0x0);
+if(!type2->_class->registered->dataType)
+type2->_class->registered->dataType = ProcessTypeString(type2->_class->registered->dataTypeString, 0x0);
+intType = ProcessTypeString((type1->_class->registered->dataType->kind == 4 || type2->_class->registered->dataType->kind == 4) ? "int64" : "int", 0x0);
+if(exp->op.exp1->destType)
+FreeType(exp->op.exp1->destType);
+if(exp->op.exp2->destType)
+FreeType(exp->op.exp2->destType);
+exp->op.exp1->destType = intType;
+exp->op.exp2->destType = intType;
+intType->refCount++;
+}
+else
+{
 if(exp->op.exp2->destType)
 FreeType(exp->op.exp2->destType);
 exp->op.exp2->destType = type1;
@@ -14528,6 +14576,7 @@ if(exp->op.exp1->destType)
 FreeType(exp->op.exp1->destType);
 exp->op.exp1->destType = type2;
 type2->refCount++;
+}
 if(!boolResult && type1->kind == 8 && (!exp->destType || exp->destType->kind != 8) && type1->_class->registered && type1->_class->registered->type == 3 && type2->_class->registered && type2->_class->registered->type == 3 && type1->_class->registered != type2->_class->registered)
 Compiler_Warning(__ecereNameSpace__ecere__GetTranslatedString("ec", "operating on %s and %s with an untyped result, assuming %s\n", (((void *)0))), type1->_class->string, type2->_class->string, type1->_class->string);
 if(type1->kind == 13 && type1->type->kind == 20 && type2->kind != 13)
@@ -14736,21 +14785,53 @@ type1 = exp->op.exp1->destType;
 exp->expType = type1;
 type1->refCount++;
 }
-if(!boolResult || exp->op.op == '>' || exp->op.op == '<')
+if(!boolResult || exp->op.op == '>' || exp->op.op == '<' || exp->op.op == GE_OP || exp->op.op == LE_OP)
 {
-if(type1->kind == 8 && type1->_class && type1->_class->registered && type1->_class->registered->type == 4 && exp->op.exp2->expType)
+unsigned int op1IsEnum = type1 && type1->kind == 8 && type1->_class && type1->_class->registered && type1->_class->registered->type == 4;
+unsigned int op2IsEnum = type2 && type2->kind == 8 && type2->_class && type2->_class->registered && type2->_class->registered->type == 4;
+
+if(exp->op.op == '*' || exp->op.op == '/' || exp->op.op == '-' || exp->op.op == '|' || exp->op.op == '^')
+{
+if(op1IsEnum && exp->op.exp2->expType)
+{
+if(CheckExpressionType(exp->op.exp1, exp->op.exp2->expType, 0x0))
+{
+if(exp->expType)
+FreeType(exp->expType);
+exp->expType = exp->op.exp2->expType;
+if(exp->op.exp2->expType)
+exp->op.exp2->expType->refCount++;
+valid = 0x1;
+}
+}
+else if(op2IsEnum && exp->op.exp1->expType)
+{
+if(CheckExpressionType(exp->op.exp2, exp->op.exp1->expType, 0x0))
+{
+if(exp->expType)
+FreeType(exp->expType);
+exp->expType = exp->op.exp1->expType;
+if(exp->op.exp1->expType)
+exp->op.exp1->expType->refCount++;
+valid = 0x1;
+}
+}
+}
+else
+{
+if(op1IsEnum && exp->op.exp2->expType)
 {
 if(CheckExpressionType(exp->op.exp1, exp->op.exp2->expType, 0x0))
 {
 if(exp->expType)
 FreeType(exp->expType);
 exp->expType = exp->op.exp1->expType;
-if(exp->op.exp2->expType)
+if(exp->op.exp1->expType)
 exp->op.exp1->expType->refCount++;
 valid = 0x1;
 }
 }
-else if(type2 && (type2->kind == 8 && type2->_class && type2->_class->registered && type2->_class->registered->type == 4 && exp->op.exp1->expType))
+else if(op2IsEnum && exp->op.exp1->expType)
 {
 if(CheckExpressionType(exp->op.exp2, exp->op.exp1->expType, 0x0))
 {
@@ -14763,7 +14844,25 @@ valid = 0x1;
 }
 }
 }
+}
 if(!valid)
+{
+if(type2 && type2->kind == 8 && type2->_class && type2->_class->registered && type2->_class->registered->type == 3 && (type1->kind != 8 || !type1->_class || !type1->_class->registered || type1->_class->registered->type != 3))
+{
+if(exp->op.exp1->destType)
+FreeType(exp->op.exp1->destType);
+exp->op.exp1->destType = type2;
+type2->refCount++;
+if(CheckExpressionType(exp->op.exp1, exp->op.exp1->destType, 0x0))
+{
+if(exp->expType)
+FreeType(exp->expType);
+exp->expType = exp->op.exp1->destType;
+if(exp->op.exp1->destType)
+exp->op.exp1->destType->refCount++;
+}
+}
+else
 {
 if(exp->op.exp2->destType)
 FreeType(exp->op.exp2->destType);
@@ -14809,6 +14908,7 @@ else if(type2->kind == 8 && type2->_class && type2->_class->registered && type2-
 exp->expType = exp->op.exp2->expType;
 if(exp->op.exp2->expType)
 exp->op.exp2->expType->refCount++;
+}
 }
 }
 }
