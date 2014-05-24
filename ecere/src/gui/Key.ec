@@ -40,9 +40,9 @@ public:
       }
    };
 
-   char * OnGetString(char * stringOutput, void * fieldData, bool * needClass)
+   const char * OnGetString(char * stringOutput, void * fieldData, bool * needClass)
    {
-      char * string;
+      const char * string;
       if((string = ((PredefinedKey)this).class::OnGetString(stringOutput, null, needClass /*null*/)))
       {
          if(needClass) *needClass = false;
@@ -59,7 +59,7 @@ public:
       }
    }
 
-   bool OnGetDataFromString(char * string)
+   bool OnGetDataFromString(const char * string)
    {
       if(((PredefinedKey)this).class::OnGetDataFromString(string))
          return true;

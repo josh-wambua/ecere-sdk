@@ -291,7 +291,7 @@ static time_t MakeTimeTfromDT(DateTime dt)
 
 public class SecSince1970 : int64
 {
-   char * OnGetString(char * tempString, void * fieldData, bool * needClass)
+   const char * OnGetString(char * tempString, void * fieldData, bool * needClass)
    {
       return ((DateTime)this).OnGetString(tempString, fieldData, needClass);
    }
@@ -316,7 +316,7 @@ public:
       {
       #if defined(__WIN32__)
          SYSTEMTIME localTime, systemTime;
-         FILETIME fileTime, localFileTime;
+         //FILETIME fileTime, localFileTime;
          DateTime input, global;
 
          input = this;
@@ -416,7 +416,7 @@ public:
 public class TimeStamp32 : uint32
 {
 public:
-   char * OnGetString(char * tempString, void * fieldData, bool * needClass)
+   const char * OnGetString(char * tempString, void * fieldData, bool * needClass)
    {
       return ((DateTime)this).OnGetString(tempString, fieldData, needClass);
    }

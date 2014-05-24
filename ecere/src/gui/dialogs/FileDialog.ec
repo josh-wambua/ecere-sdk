@@ -1451,7 +1451,7 @@ private:
          if(active)
          {
             char * selectedFileName = null;
-            char * editText;
+            const char * editText;
             if(getNameFromListBox)
             {
                DataRow row = listBox.currentRow;
@@ -1513,8 +1513,6 @@ private:
 
    CreateDirectoryDialog()
    {
-      FileNameType c;
-
       GetWorkingDir(currentDirectory, MAX_DIRECTORY);
       FileFixCase(currentDirectory);
    }

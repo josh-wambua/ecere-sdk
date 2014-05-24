@@ -239,7 +239,8 @@ public char * PassArg(char * output, const char * input)
    const char * escCharsQuoted = "\"()$";
 #endif
    bool quoting = false;
-   char *o = output, *i = input, *l = input;
+   char *o = output;
+   const char *i = input, *l = input;
 #ifdef __WIN32__
    while(*l && !strchr(escChars, *l)) l++;
    if(*l) quoting = true;
@@ -753,6 +754,7 @@ public:
       OldList * list;
    };
    bool isConstant;
+   Identifier id;
 };
 
 public class InitDeclarator : struct
@@ -1441,7 +1443,7 @@ void Compiler_Error(char * format, ...)
          */
 #ifdef _DEBUG
          if(!yylloc.start.line)
-            printf("");
+            printf("no line");
 #endif
 
          //printf("(%d, %d) : error: ", yylloc.start.line, yylloc.start.charPos);

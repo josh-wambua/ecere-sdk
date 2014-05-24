@@ -59,7 +59,7 @@ void * __ecereNameSpace__ecere__com__eSystem_Renew0(void * memory, unsigned int 
 unsigned short * __ecereNameSpace__ecere__sys__UTF8toUTF16(char * source, int * wordCount);
 unsigned short * __ecereNameSpace__ecere__sys__UTF8toUTF16Buffer(char * source, uint16 * dest, int max);
 char * __ecereNameSpace__ecere__sys__UTF16toUTF8(uint16 * source);
-char * __ecereNameSpace__ecere__sys__UTF16toUTF8Buffer(uint16 * source, byte * dest, int max);
+char * __ecereNameSpace__ecere__sys__UTF16toUTF8Buffer(uint16 * source, char * dest, int max);
 
 char * __ecereNameSpace__ecere__sys__StripLastDirectory(char * string, char * output);
 
@@ -225,7 +225,7 @@ char * System_GetWorkingDir(char * buf, int size)
 #if defined(__WIN32__)
    uint16 * _wbuf = __ecereNameSpace__ecere__com__eSystem_New(sizeof(uint16) * size);
    _wgetcwd(_wbuf, size);
-   __ecereNameSpace__ecere__sys__UTF16toUTF8Buffer(_wbuf, (byte *)buf, size);
+   __ecereNameSpace__ecere__sys__UTF16toUTF8Buffer(_wbuf, buf, size);
    __ecereNameSpace__ecere__com__eSystem_Delete(_wbuf);
    return buf;
 #else
@@ -258,7 +258,7 @@ char * System_GetEnvironment(char * envName, char * envValue, int max)
    //result = _wgetenv(_wenvName);
    //if(result)
    if(success && success < sizeof(result) / sizeof(uint16))
-      __ecereNameSpace__ecere__sys__UTF16toUTF8Buffer(result, (byte *)envValue, max);
+      __ecereNameSpace__ecere__sys__UTF16toUTF8Buffer(result, envValue, max);
    else
       envValue[0] = 0;
 

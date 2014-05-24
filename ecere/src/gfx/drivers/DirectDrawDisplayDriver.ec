@@ -633,7 +633,7 @@ class DirectDrawDisplayDriver : DisplayDriver
    #endif
    }
 
-   void WriteText(Display display, Surface surface, int x, int y, byte * text, int len)
+   void WriteText(Display display, Surface surface, int x, int y, const char * text, int len)
    {
    #ifdef USE_GDI_FONT
       DDrawDisplay ddrawDisplay = display.driverData;
@@ -686,7 +686,7 @@ class DirectDrawDisplayDriver : DisplayDriver
    #endif
    }
 
-   void FontExtent(DisplaySystem displaySystem, Font font, byte * text, int len, int * width, int * height)
+   void FontExtent(DisplaySystem displaySystem, Font font, const char * text, int len, int * width, int * height)
    {
    #ifdef USE_GDI_FONT
       if(false) //display.alphaBlend)
@@ -728,7 +728,7 @@ class DirectDrawDisplayDriver : DisplayDriver
    #endif
    }
 
-   void TextExtent(Display display, Surface surface, byte * text, int len, int * width, int * height)
+   void TextExtent(Display display, Surface surface, const char * text, int len, int * width, int * height)
    {
    #ifdef USE_GDI_FONT
       /*if(display && display.alphaBlend)
@@ -793,8 +793,8 @@ class DirectDrawDisplayDriver : DisplayDriver
 
    bool Lock(Display display)
    {
-      DDrawDisplay ddrawDisplay = display.driverData;
-      /*if(ddrawDisplay.Lock())
+      /*DDrawDisplay ddrawDisplay = display.driverData;
+      if(ddrawDisplay.Lock())
       {
          display.displaySystem.pixelFormat = ddrawDisplay.bitmap.pixelFormat;
          IDirectDrawSurface_GetDC(ddrawDisplay.back, &ddrawDisplay.hdc);
@@ -804,8 +804,8 @@ class DirectDrawDisplayDriver : DisplayDriver
 
    void Unlock(Display display)
    {
-      DDrawDisplay ddrawDisplay = display.driverData;
-      /*IDirectDrawSurface_ReleaseDC(ddrawDisplay.back, ddrawDisplay.hdc);
+      /*DDrawDisplay ddrawDisplay = display.driverData;
+      IDirectDrawSurface_ReleaseDC(ddrawDisplay.back, ddrawDisplay.hdc);
       ddrawDisplay.Unlock();   */
    }
 }

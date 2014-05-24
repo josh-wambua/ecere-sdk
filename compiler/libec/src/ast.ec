@@ -2630,6 +2630,7 @@ static Type ProcessTypeDecls(OldList specs, Declarator decl, Type parentType)
             while(pointer)
             {
                OldList * qualifiers = pointer.qualifiers;
+               bool constant = type.constant;
                if(type.classObjectType)
                   type.byReference = true;
                else
@@ -2640,9 +2641,10 @@ static Type ProcessTypeDecls(OldList specs, Declarator decl, Type parentType)
                   for(spec = qualifiers->first; spec; spec = spec.next)
                   {
                      if(spec.type == baseSpecifier && spec.specifier == CONST)
-                        type.constant = true;
+                        type.type.constant = true;
                   }
                }
+               type.constant = constant;
                pointer = pointer.pointer;
             }
             break;

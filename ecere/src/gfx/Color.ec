@@ -38,8 +38,7 @@ public:
 
    Window OnEdit(Window dataBox, Window master, int x, int y, int w, int h, Window control)
    {
-      Size size = { 0 };
-      char * string = "";
+      const char * string = "";
       ColorDropBox colorDropBox
       {
          dataBox, master = master, editText = true, //position = Point { x + 24, y }, /*clientSize.h = */size.h = h, size.w = w - 24,
@@ -51,7 +50,7 @@ public:
       //if(this)
       {
          char tempString[MAX_F_STRING];
-         char * result;
+         const char * result;
          bool needClass = false;
          tempString[0] = 0;
          result = OnGetString(tempString, null, &needClass);
@@ -63,9 +62,9 @@ public:
       return colorDropBox;
    }
 
-   char * OnGetString(char * stringOutput, void * fieldData, bool * needClass)
+   const char * OnGetString(char * stringOutput, void * fieldData, bool * needClass)
    {
-      char * string;
+      const char * string;
       if((string = ((DefinedColor)this).class::OnGetString(stringOutput, null, needClass)) ||
          (string = ((SystemColor)this).class::OnGetString(stringOutput, null, needClass)))
       {
@@ -75,7 +74,7 @@ public:
       else
       {
          char tempString[256];
-         char * colorValue;
+         const char * colorValue;
          bool subNeedClass;
          int value;
 
@@ -103,7 +102,7 @@ public:
       }
    }
 
-   bool OnGetDataFromString(char * string)
+   bool OnGetDataFromString(const char * string)
    {
       if(!atoi(string) && (((DefinedColor)this).class::OnGetDataFromString(string) ||
          ((SystemColor)this).class::OnGetDataFromString(string)))
@@ -122,7 +121,7 @@ public:
       // - Color property in IDE is fine as well
       // - How is it on Linux?
       int yOffset = 0;//(1+surface.box.bottom - surface.box.top - 17)/2;
-      char * string = OnGetString(tempString, null, &needClass);
+      const char * string = OnGetString(tempString, null, &needClass);
       surface.WriteTextDots(alignment, x + 24, y + 1, width - 24, string, strlen(string));
 
       // Erase background?
@@ -656,7 +655,7 @@ private class ColorValue : Color
       {
          char tempString[1024] = "";
          bool needClass = false;
-         char * string = color.OnGetString(tempString, null, &needClass);
+         const char * string = color.OnGetString(tempString, null, &needClass);
          contents = string;
       }
       OnKeyDown(escape, 0);
@@ -722,7 +721,7 @@ private class ColorValue : Color
             {
                char tempString[1024] = "";
                bool needClass = false;
-               char * string = color.OnGetString(tempString, null, &needClass);
+               const char * string = color.OnGetString(tempString, null, &needClass);
                contents = string;
             }
          }
@@ -787,7 +786,7 @@ private class ColorValue : Color
          for(item = ((EnumClassData)class(DefinedColor).data).values.first; item; item = item.next)
          {
             DataRow row = defined.AddRow();
-            row.SetData(definedColorField, (Color)item.data);
+            row.SetData(definedColorField, (Color)(uint)item.data);
             strcpy(tempString, item.name);
             tempString[0] = (char)toupper(tempString[0]);
             row.SetData(definedColorName, tempString);
@@ -810,7 +809,7 @@ private class ColorValue : Color
          for(item = ((EnumClassData)class(SystemColor).data).values.first; item; item = item.next)
          {
             DataRow row = system.AddRow();
-            row.SetData(sysColorField, (Color)item.data);
+            row.SetData(sysColorField, (Color)(uint)item.data);
             strcpy(tempString, item.name);
             tempString[0] = (char)toupper(tempString[0]);
             row.SetData(sysColorName, tempString);
@@ -862,7 +861,7 @@ private class ColorValue : Color
       {
          char tempString[1024] = "";
          bool needClass = false;
-         char * string = colorDropBox.color.OnGetString(tempString,null, &needClass);
+         const char * string = colorDropBox.color.OnGetString(tempString, null, &needClass);
          colorDropBox.contents = string;
       }
       return true;

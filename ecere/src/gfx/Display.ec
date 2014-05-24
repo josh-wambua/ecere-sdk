@@ -44,9 +44,9 @@ public class FontFlags
    public bool bold:1, italic:1, underline:1;
 };
 
-static void DummyFunction()
+__attribute__((unused)) static void DummyFunction()
 {
-   Mutex mutex { };
+   Mutex { };
 }
 
 public class DisplayDriver
@@ -146,9 +146,9 @@ public:
    virtual void ::FilterDI(Display, Surface, Bitmap, int, int, int, int, int, int, int,int);
    virtual void ::TextFont(Display, Surface, Font);
    virtual void ::TextOpacity(Display, Surface, bool);
-   virtual void ::WriteText(Display, Surface, int, int, char *, int);
-   virtual void ::TextExtent(Display, Surface, char *, int, int *, int *);
-   virtual void ::FontExtent(DisplaySystem, Font, char *, int, int *, int *);
+   virtual void ::WriteText(Display, Surface, int, int, const char *, int);
+   virtual void ::TextExtent(Display, Surface, const char *, int, int *, int *);
+   virtual void ::FontExtent(DisplaySystem, Font, const char *, int, int *, int *);
    virtual void ::DrawingChar(Display, Surface, char);
    virtual void ::NextPage(Display);
 #if !defined(ECERE_VANILLA) && !defined(ECERE_NO3D)
@@ -502,7 +502,7 @@ public:
       return result;
    }
 
-   void FontExtent(Font font, char * text, int len, int * width, int * height)
+   void FontExtent(Font font, const char * text, int len, int * width, int * height)
    {
       // Fix for OnLoadGraphics time alpha blended window text extent on GDI
 #if defined(__WIN32__) && !defined(ECERE_NOTRUETYPE)

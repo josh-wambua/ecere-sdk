@@ -176,10 +176,10 @@ public struct Anchor
    union { AnchorValue top; MiddleAnchorValue vert; };
    AnchorValue right, bottom;
 
-   char * OnGetString(char * stringOutput, void * fieldData, bool * needClass)
+   const char * OnGetString(char * stringOutput, void * fieldData, bool * needClass)
    {
       char tempString[256];
-      char * anchorValue;
+      const char * anchorValue;
       bool subNeedClass;
 
       tempString[0] = '\0';
@@ -217,7 +217,7 @@ public struct Anchor
       return stringOutput;
    }
 
-   bool OnGetDataFromString(char * string)
+   bool OnGetDataFromString(const char * string)
    {
       this = Anchor {};
       return class::OnGetDataFromString(string);
@@ -230,7 +230,7 @@ public struct Anchor
 
    Window OnEdit(Window listBox, Window master, int x, int y, int w, int h, Window control)
    {
-      char * string = "";
+      const char * string = "";
       AnchorDropBox comboBox
       {
          editText = true;
@@ -250,7 +250,7 @@ public struct Anchor
       {
          char tempString[MAX_F_STRING] = "";
          bool needClass = false;
-         char * result = OnGetString(tempString, null, &needClass);
+         const char * result = OnGetString(tempString, null, &needClass);
          if(result) string = result;
       }
       comboBox.contents = string;
@@ -368,7 +368,7 @@ private class AnchorButton : Button
       {
          char tempString[1024] = "";
          bool needClass = false;
-         char * string = anchor.OnGetString(tempString, null, &needClass);
+         const char * string = anchor.OnGetString(tempString, null, &needClass);
          anchorDropBox.contents = string;
       }
 
@@ -491,7 +491,7 @@ private class AnchorRelButton : Button
       {
          char tempString[1024] = "";
          bool needClass = false;
-         char * string = anchor.OnGetString(tempString, null, &needClass);
+         const char * string = anchor.OnGetString(tempString, null, &needClass);
          anchorDropBox.contents = string;
       }
 
@@ -594,7 +594,6 @@ private class AnchorDropBox : DropBox
    bool DataBox::NotifyTextEntry(AnchorDropBox dropBox, char * string, bool save)
    {
       Anchor anchor = dropBox.anchorValue;
-      Window control = dropBox.control;
 
       if(save)
       {
@@ -608,7 +607,7 @@ private class AnchorDropBox : DropBox
       {
          char tempString[1024] = "";
          bool needClass = false;
-         char * string = anchor.OnGetString(tempString, null, &needClass);
+         const char * string = anchor.OnGetString(tempString, null, &needClass);
          dropBox.contents = string;
       }
       return true;

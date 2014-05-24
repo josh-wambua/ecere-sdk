@@ -21,7 +21,7 @@ import "IDESettings"
 
 default:
 
-static void DummyFunction()
+static __attribute__((unused)) void DummyFunction()
 {
 int a;
 a.OnFree();
@@ -1783,7 +1783,46 @@ private:
                               numErrors++;
                            }
                            else if(compilingEC == 1 || (objDir && objDir == moduleName))
-                              continue;
+                           {
+                              bool skip = false;
+
+                              // For templates -- might be able to fix?
+                              //if(strstr(line, "note: expected 'uint64' but argument is of type '")) skip = true;
+
+                              // Filter out these warnings caused by eC generated C code:
+
+                              //else if(strstr(line, "built-in function")) skip = true;
+
+                              // Bad generated initializers? Unions? -- Fixed!
+                              //else if(strstr(line, "missing braces around initializer")) skip = true;
+                              //else if(strstr(line, "excess elements in struct initializer")) skip = true;
+
+                              // Declaration ordering bugs -- should fix now if easy, else with topo sort implementation
+                                   if(strstr(line, "declared inside parameter list")) skip = true;
+                              else if(strstr(line, "its scope is only this definition")) skip = true;
+                              else if(strstr(line, "note: expected 'struct __")) skip = true;
+
+                              // Pointers warnings (eC should already warn about relevant problems, more forgiving for function pointers, should cast in generated code)
+                              else if(strstr(line, "note: expected '") && strstr(line, "(*)")) skip = true;
+                              else if(strstr(line, "expected 'void **")) skip = true;
+                              else if(strstr(line, "from incompatible pointer type")) skip = true;
+                              else if(strstr(line, "comparison of distinct pointer types lacks a cast")) skip = true;
+
+                              // Things being defined for potential use -- Should mark as unused
+                              else if(strstr(line, "unused variable") && (strstr(line, "'__") || strstr(line, "'class'"))) skip = true;
+                              else if(strstr(line, "defined but not used") && strstr(line, "__ecereProp")) skip = true;
+
+                              // For preprocessed code from objidl.h (MinGW-w64 headers)
+                              else if(strstr(line, "declaration does not declare anything")) skip = true;
+
+                              // Location information that could apply to ignored warnings
+                              else if(strstr(line, "In function '")) skip = true;
+                              else if(strstr(line, "At top level")) skip = true;
+                              else if(strstr(line, "(near initialization for '")) skip = true;
+
+                              if(skip) continue;
+                              numWarnings++;
+                           }
                            else if(strstr(line, "warning:"))
                            {
                               numWarnings++;

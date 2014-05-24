@@ -121,7 +121,7 @@ public:
       get { return currentRow; }
    };
    property DataRow firstRow { get { return this ? listBox.firstRow : null; } };
-   property char * contents { property_category $"Data" set { if(editBox) editBox.contents = value; } get { return editBox ? editBox.contents : null; } };
+   property const char * contents { property_category $"Data" set { if(editBox) editBox.contents = value; } get { return editBox ? editBox.contents : null; } };
    property bool editText
    {
       property_category $"Behavior"
@@ -217,7 +217,7 @@ public:
    virtual bool Window::NotifySelect(DropBox dropBox, DataRow row, Modifiers mods);
    virtual bool Window::NotifyClose(DropBox dropBox);
    virtual bool Window::NotifyHighlight(DropBox dropBox, DataRow row, Modifiers mods);
-   virtual bool Window::NotifyTextEntry(DropBox dropBox, char * string, bool confirmed);
+   virtual bool Window::NotifyTextEntry(DropBox dropBox, const char * string, bool confirmed);
 
    virtual Window OnDropDown()
    {

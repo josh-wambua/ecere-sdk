@@ -101,7 +101,7 @@ bool NeedCast(Type type1, Type type2)
          case classType:
             return type1._class != type2._class;
          case pointerType:
-            return NeedCast(type1.type, type2.type);
+            return type1.constant != type2.constant || NeedCast(type1.type, type2.type);
          default:
             return true; //false; ????
       }
@@ -402,7 +402,6 @@ void ComputeClassMembers(Class _class, bool isMember)
    if(member || ((_class.type == bitClass || _class.type == normalClass || _class.type == structClass || _class.type == noHeadClass) &&
                  (_class.type == bitClass || (!_class.structSize || _class.structSize == _class.offset)) && _class.computeSize))
    {
-      int c;
       int unionMemberOffset = 0;
       int bitFields = 0;
 
@@ -1002,7 +1001,6 @@ public int ComputeTypeSize(Type type)
 static int DeclareMembers(Class _class, bool isMember)
 {
    DataMember topMember = isMember ? (DataMember) _class : null;
-   uint totalSize = 0;
    DataMember member;
    Context context = isMember ? null : SetupTemplatesContext(_class);
 
@@ -2050,8 +2048,7 @@ void ProcessInstantiationType(Instantiation inst)
 
                   if(inCompiler)
                   {
-
-                     Type type = declarator.symbol.type;
+                     //Type type = declarator.symbol.type;
                      External oldExternal = curExternal;
 
                      // *** Commented this out... Any negative impact? Yes: makes double prototypes declarations... Why was it commented out?
@@ -4447,7 +4444,7 @@ public Operand GetOperand(Expression exp)
    return op;
 }
 
-static void UnusedFunction()
+static __attribute__((unused)) void UnusedFunction()
 {
    int a;
    a.OnGetString(0,0,0);
@@ -6361,7 +6358,6 @@ void CheckTemplateTypes(Expression exp)
    if(exp.destType && exp.destType.passAsTemplate && exp.expType && exp.expType.kind != templateType && !exp.expType.passAsTemplate)
    {
       Expression newExp { };
-      Statement compound;
       Context context;
       *newExp = *exp;
       if(exp.destType) exp.destType.refCount++;
@@ -10370,6 +10366,7 @@ void ProcessExpressionType(Expression exp)
       }
       case castExp:
       {
+         bool eConst;
          Type type = ProcessType(exp.cast.typeName.qualifiers, exp.cast.typeName.declarator);
          type.count = 1;
          FreeType(exp.cast.exp.destType);
@@ -10379,6 +10376,8 @@ void ProcessExpressionType(Expression exp)
          type.count = 0;
          exp.expType = type;
          //type.refCount++;
+
+         eConst = exp.cast.exp.expType.constant;
 
          // if(!NeedCast(exp.cast.exp.expType, exp.cast.exp.destType))
          if(!exp.cast.exp.needCast && !NeedCast(exp.cast.exp.expType, type))
@@ -12812,7 +12811,13 @@ void ComputeDataTypes()
    DeclareFunctionUtil("eSystem_Renew0");
    DeclareFunctionUtil("eSystem_Delete");
    DeclareFunctionUtil("eClass_GetProperty");
+   DeclareFunctionUtil("eClass_SetProperty");
    DeclareFunctionUtil("eInstance_FireSelfWatchers");
+   DeclareFunctionUtil("eInstance_SetMethod");
+   DeclareFunctionUtil("eInstance_IncRef");
+   DeclareFunctionUtil("eInstance_StopWatching");
+   DeclareFunctionUtil("eInstance_Watch");
+   DeclareFunctionUtil("eInstance_FireWatchers");
 
    DeclareStruct("ecere::com::Class", false);
    DeclareStruct("ecere::com::Instance", false);

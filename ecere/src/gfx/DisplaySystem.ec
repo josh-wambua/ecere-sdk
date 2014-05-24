@@ -79,7 +79,7 @@ public:
       return result;
    }
 
-   Font LoadFont(char * faceName, float size, FontFlags flags)
+   Font LoadFont(const char * faceName, float size, FontFlags flags)
    {
       Font result = null;
       subclass(DisplayDriver) driver = this ? this.driver : ((subclass(DisplayDriver))class(LFBDisplayDriver));
@@ -109,7 +109,7 @@ public:
       driver.UnloadFont(this, font);
    }
 
-   void FontExtent(Font font, byte * text, int len, int * width, int * height)
+   void FontExtent(Font font, const char * text, int len, int * width, int * height)
    {
       if(this && text)
          driver.FontExtent(this, font, text, len, width, height);

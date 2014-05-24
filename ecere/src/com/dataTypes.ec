@@ -54,7 +54,7 @@ public define FORMAT64U      = (GetRuntimePlatform() == win32) ? "%I64u" : "%llu
 
 #define GETXQWORD(b) (uint64)(((uint64)(b)[0] << 56) | ((uint64)(b)[1] << 48) | ((uint64)(b)[2] << 40) | ((uint64)(b)[3] << 32) | ((uint64)(b)[4] << 24) | ((b)[5] << 16) | ((b)[6] << 8) | (b)[7])
 
-static void UnusedFunction()
+__attribute__((unused)) static void UnusedFunction()
 {
    int a;
    a.OnGetString(0,0,0);
@@ -99,14 +99,11 @@ public:
 #define dllexport
 #endif
 
-// TOFIX: Declaration ordering (Required on gcc 3.4.5)
-dllexport void eSystem_Delete(void * memory);
-
 public class IOChannel
 {
 public:
-   virtual uint WriteData(byte * data, uint numBytes);
-   virtual uint ReadData(byte * data, uint numBytes);
+   virtual uint WriteData(const void * data, uint numBytes);
+   virtual uint ReadData(void * data, uint numBytes);
 
    dllexport void Serialize(typed_object data)
    {
@@ -137,7 +134,7 @@ public:
    uint _size;
    uint pos;
 
-   uint WriteData(byte * bytes, uint numBytes)
+   uint WriteData(const void * bytes, uint numBytes)
    {
       if(this != null)
       {
@@ -154,7 +151,7 @@ public:
       return 0;
    }
 
-   uint ReadData(byte * bytes, uint numBytes)
+   uint ReadData(void * bytes, uint numBytes)
    {
       if(this != null)
       {
@@ -196,7 +193,7 @@ public:
    }
 };
 
-/*static */char * Enum_OnGetString(Class _class, int * data, char * tempString, void * fieldData, bool * needClass)
+/*static */const char * Enum_OnGetString(Class _class, int * data, char * tempString, void * fieldData, bool * needClass)
 {
    NamedLink item = null;
    Class b;
@@ -219,7 +216,7 @@ public:
       return null;
 }
 
-static bool Enum_OnGetDataFromString(Class _class, int * data, char * string)
+static bool Enum_OnGetDataFromString(Class _class, int * data, const char * string)
 {
    NamedLink item = null;
    Class b;
@@ -466,7 +463,7 @@ static int OnCompare(Class _class, void * data1, void * data2)
    return 0;
 }
 
-static char * OnGetString(Class _class, void * data, char * tempString, void * fieldData, bool * needClass)
+static const char * OnGetString(Class _class, void * data, char * tempString, void * fieldData, bool * needClass)
 {
    // WHY DOES _class.module NOT SEEM TO WORK?
    Module module = _class.templateClass ? _class.templateClass.module : _class.module;
@@ -574,7 +571,7 @@ static char * OnGetString(Class _class, void * data, char * tempString, void * f
                {
                   if(memberType.type != structClass && (memberType.type != normalClass || !strcmp(memberType.dataTypeString, "char *")) && memberType.type != bitClass && data)
                   {
-                     DataValue value = { 0 };
+                     DataValue value { };
                      if(!strcmp(prop.dataTypeString, "float"))
                      {
                         value.f = ((float(*)(void *))(void *)prop.Get)(data);
@@ -650,7 +647,7 @@ static char * OnGetString(Class _class, void * data, char * tempString, void * f
                   //else if(_class /*memberType*/.type != bitClass)
                   else // if(_class /*memberType*/.type != bitClass)
                   {
-                     DataValue value = { 0 };
+                     DataValue value { };
                      if(_class.type == bitClass)
                      {
                         BitMember bitMember = (BitMember) member;
@@ -774,7 +771,7 @@ static char * OnGetString(Class _class, void * data, char * tempString, void * f
    return tempString;
 }
 
-static bool OnGetDataFromString(Class _class, void ** data, char * string)
+static bool OnGetDataFromString(Class _class, void ** data, const char * string)
 {
    bool result;
    Module module = _class.module;
@@ -1028,7 +1025,7 @@ static bool OnGetDataFromString(Class _class, void ** data, char * string)
             }
             else
             {
-               DataValue value = { 0 };
+               DataValue value { };
                // Patch for hotKey crash ( #556 )
                // Key has a member KeyCode, which inherits from Key
                // We don't want KeyCode to use its base class OnGetDataFromString
@@ -1329,13 +1326,13 @@ static int Integer_OnCompare(Class _class, int * data1, int * data2)
    return result;
 }
 
-/*static */char * Integer_OnGetString(Class _class, int * data, char * string, void * fieldData, bool * needClass)
+/*static */const char * Integer_OnGetString(Class _class, int * data, char * string, void * fieldData, bool * needClass)
 {
    sprintf(string, "%d", *data);
    return string;
 }
 
-static bool Integer_OnGetDataFromString(Class _class, int * data, char * string)
+static bool Integer_OnGetDataFromString(Class _class, int * data, const char * string)
 {
    char * end;
    int result = strtol(string, &end, 0);
@@ -1348,13 +1345,13 @@ static bool Integer_OnGetDataFromString(Class _class, int * data, char * string)
    return false;
 }
 
-static char * Int16_OnGetString(Class _class, short * data, char * string, void * fieldData, bool * needClass)
+static const char * Int16_OnGetString(Class _class, short * data, char * string, void * fieldData, bool * needClass)
 {
    sprintf(string, "%d", (int)*data);
    return string;
 }
 
-static bool Int16_OnGetDataFromString(Class _class, short * data, char * string)
+static bool Int16_OnGetDataFromString(Class _class, short * data, const char * string)
 {
    char * end;
    short result = (short)strtol(string, &end, 0);
@@ -1389,7 +1386,7 @@ static int UInteger_OnCompare(Class _class, unsigned int * data1, unsigned int *
    return result;
 }
 
-static char * UInteger_OnGetString(Class _class, unsigned int * data, char * string, void * fieldData, bool * needClass)
+static const char * UInteger_OnGetString(Class _class, unsigned int * data, char * string, void * fieldData, bool * needClass)
 {
    sprintf(string, "%u", *data);
    return string;
@@ -1406,20 +1403,20 @@ static int UInt16_OnCompare(Class _class, uint16 * data1, unsigned int * data2)
    return result;
 }
 
-static char * UInt16_OnGetString(Class _class, uint16 * data, char * string, void * fieldData, bool * needClass)
+static const char * UInt16_OnGetString(Class _class, uint16 * data, char * string, void * fieldData, bool * needClass)
 {
    sprintf(string, "%u", (uint)*data);
    return string;
 }
 
 
-static char * UIntegerHex_OnGetString(Class _class, unsigned int * data, char * string, void * fieldData, bool * needClass)
+static const char * UIntegerHex_OnGetString(Class _class, unsigned int * data, char * string, void * fieldData, bool * needClass)
 {
    sprintf(string, "%x", *data);
    return string;
 }
 
-static bool UInteger_OnGetDataFromString(Class _class, unsigned int * data, char * string)
+static bool UInteger_OnGetDataFromString(Class _class, unsigned int * data, const char * string)
 {
    char * end;
    uint result = (uint)strtoul(string, &end, 0);
@@ -1431,7 +1428,7 @@ static bool UInteger_OnGetDataFromString(Class _class, unsigned int * data, char
    return false;
 }
 
-static bool UInt16_OnGetDataFromString(Class _class, uint16 * data, char * string)
+static bool UInt16_OnGetDataFromString(Class _class, uint16 * data, const char * string)
 {
    char * end;
    uint16 result = (uint16)strtoul(string, &end, 0);
@@ -1454,23 +1451,23 @@ static int Byte_OnCompare(Class _class, byte * data1, byte * data2)
    return result;
 }
 
-static char * Byte_OnGetString(Class _class, byte * data, char * string, void * fieldData, bool * needClass)
+static const char * Byte_OnGetString(Class _class, byte * data, char * string, void * fieldData, bool * needClass)
 {
    sprintf(string, "%u", (int)*data);
    return string;
 }
 
-static char * Char_OnGetString(Class _class, char * data, char * string, void * fieldData, bool * needClass)
+static const char * Char_OnGetString(Class _class, char * data, char * string, void * fieldData, bool * needClass)
 {
    if(needClass && *needClass)
    {
       char ch = *data;
-      if(ch == '\t')      strcpy(string, "'\t'");
-      else if(ch == '\n') strcpy(string, "'\n'");
-      else if(ch == '\r') strcpy(string, "'\r'");
-      else if(ch == '\a') strcpy(string, "'\a'");
-      else if(ch == '\\') strcpy(string, "'\\'");
-      else if(ch < 32 || ch >= 127)    sprintf(string, "'\o'", ch);
+      if(ch == '\t')      strcpy(string, "'\\t'");
+      else if(ch == '\n') strcpy(string, "'\\n'");
+      else if(ch == '\r') strcpy(string, "'\\r'");
+      else if(ch == '\a') strcpy(string, "'\\a'");
+      else if(ch == '\\') strcpy(string, "'\\\\'");
+      else if(ch < 32 || ch >= 127)    sprintf(string, "'\\x%x'", ch);
       else sprintf(string, "'%c'", ch);
    }
    else
@@ -1478,7 +1475,7 @@ static char * Char_OnGetString(Class _class, char * data, char * string, void * 
    return string;
 }
 
-static bool Byte_OnGetDataFromString(Class _class, byte * data, char * string)
+static bool Byte_OnGetDataFromString(Class _class, byte * data, const char * string)
 {
    char * end;
    byte result = (byte)strtoul(string, &end, 0);
@@ -1544,47 +1541,47 @@ static int UIntPtr32_OnCompare(Class _class, uint32 data1, uint32 data2)
    return result;
 }
 
-static char * Int64_OnGetString(Class _class, int64 * data, char * string, void * fieldData, bool * needClass)
+static const char * Int64_OnGetString(Class _class, int64 * data, char * string, void * fieldData, bool * needClass)
 {
    sprintf(string, FORMAT64D, *data);
    return string;
 }
 
-static char * UInt64_OnGetString(Class _class, uint64 * data, char * string, void * fieldData, bool * needClass)
+static const char * UInt64_OnGetString(Class _class, uint64 * data, char * string, void * fieldData, bool * needClass)
 {
    sprintf(string, FORMAT64U, *data);
    return string;
 }
 
-static char * UInt64Hex_OnGetString(Class _class, uint64 * data, char * string, void * fieldData, bool * needClass)
+static const char * UInt64Hex_OnGetString(Class _class, uint64 * data, char * string, void * fieldData, bool * needClass)
 {
    sprintf(string, FORMAT64HEX, *data);
    return string;
 }
 
-static char * UIntPtr64_OnGetString(Class _class, uint64 data, char * string, void * fieldData, bool * needClass)
+static const char * UIntPtr64_OnGetString(Class _class, uint64 data, char * string, void * fieldData, bool * needClass)
 {
    return UInt64Hex_OnGetString(_class, &data, string, fieldData, needClass);
 }
 
-static char * UIntPtr32_OnGetString(Class _class, uint data, char * string, void * fieldData, bool * needClass)
+static const char * UIntPtr32_OnGetString(Class _class, uint data, char * string, void * fieldData, bool * needClass)
 {
    return UIntegerHex_OnGetString(_class, &data, string, fieldData, needClass);
 }
 
-static char * IntPtr64_OnGetString(Class _class, uint64 data, char * string, void * fieldData, bool * needClass)
+static const char * IntPtr64_OnGetString(Class _class, int64 data, char * string, void * fieldData, bool * needClass)
 {
    return Int64_OnGetString(_class, &data, string, fieldData, needClass);
 }
 
-static char * IntPtr32_OnGetString(Class _class, uint data, char * string, void * fieldData, bool * needClass)
+static const char * IntPtr32_OnGetString(Class _class, int data, char * string, void * fieldData, bool * needClass)
 {
    return Integer_OnGetString(_class, &data, string, fieldData, needClass);
 }
 
-static bool Int64_OnGetDataFromString(Class _class, uint64 * data, char * string)
+static bool Int64_OnGetDataFromString(Class _class, int64 * data, const char * string)
 {
-   char * end;
+   const char * end;
    uint64 result = _strtoi64(string, &end, 0);
    if(end > string)
    {
@@ -1594,9 +1591,9 @@ static bool Int64_OnGetDataFromString(Class _class, uint64 * data, char * string
    return false;
 }
 
-static bool UInt64_OnGetDataFromString(Class _class, uint64 * data, char * string)
+static bool UInt64_OnGetDataFromString(Class _class, uint64 * data, const char * string)
 {
-   char * end;
+   const char * end;
    uint64 result = _strtoui64(string, &end, 0);
    if(end > string)
    {
@@ -2149,7 +2146,7 @@ public struct StaticString
 
    void OnSerialize(IOChannel channel)
    {
-      int len = this ? strlen(string) : 0;
+      uint len = this ? strlen(string) : 0;
       channel.WriteData(this ? string : "", len+1);
    }
 
@@ -2158,7 +2155,6 @@ public struct StaticString
       if(this)
       {
          int c;
-         uint size;
 
          for(c = 0; channel.ReadData(&string[c], 1) && string[c]; c++);
          string[c++] = '\0';
@@ -2311,8 +2307,8 @@ void InitializeDataTypes1(Module module)
    eClass_AddVirtualMethod(baseClass, "OnCompare", "int typed_object::OnCompare(any_object object)", OnCompare, publicAccess);
    eClass_AddVirtualMethod(baseClass, "OnCopy", "void typed_object&::OnCopy(any_object newData)", OnCopy, publicAccess);
    eClass_AddVirtualMethod(baseClass, "OnFree", "void typed_object::OnFree(void)", OnFree, publicAccess);
-   eClass_AddVirtualMethod(baseClass, "OnGetString", "char * typed_object::OnGetString(char * tempString, void * fieldData, bool * needClass)", OnGetString, publicAccess);
-   eClass_AddVirtualMethod(baseClass, "OnGetDataFromString", "bool typed_object&::OnGetDataFromString(char * string)", OnGetDataFromString, publicAccess);
+   eClass_AddVirtualMethod(baseClass, "OnGetString", "const char * typed_object::OnGetString(char * tempString, void * fieldData, bool * needClass)", OnGetString, publicAccess);
+   eClass_AddVirtualMethod(baseClass, "OnGetDataFromString", "bool typed_object&::OnGetDataFromString(const char * string)", OnGetDataFromString, publicAccess);
    eClass_AddVirtualMethod(baseClass, "OnEdit", "Window typed_object::OnEdit(DataBox dataBox, DataBox obsolete, int x, int y, int w, int h, void * userData)", null, publicAccess);
    eClass_AddVirtualMethod(baseClass, "OnSerialize", "void typed_object::OnSerialize(IOChannel channel)", OnSerialize, publicAccess);
    eClass_AddVirtualMethod(baseClass, "OnUnserialize", "void typed_object&::OnUnserialize(IOChannel channel)", OnUnserialize, publicAccess);
@@ -2337,7 +2333,7 @@ public int PrintStdArgsToBuffer(char * buffer, int maxLen, typed_object object, 
 {
    int len = 0;
    // TOFIX: OnGetString will need a maxLen as well
-   char * result = object.OnGetString(buffer, null, null);
+   const char * result = object.OnGetString(buffer, null, null);
    if(result)
    {
       len = strlen(result);

@@ -50,7 +50,7 @@ public enum Month
 {
    january, february, march, april, may, june, july, august, september, october, november, december;
 
-   char * OnGetString(char * string, void * fieldData, bool * needClass)
+   const char * OnGetString(char * string, void * fieldData, bool * needClass)
    {
       Month m = this;
       if(m >= january && m <= december)
@@ -63,7 +63,7 @@ public enum Month
       return null;
    }
 
-   bool OnGetDataFromString(char * string)
+   bool OnGetDataFromString(const char * string)
    {
       if(string)
       {
@@ -151,7 +151,6 @@ public struct Date
          while(GetAlNum(&string, value, sizeof(value)))
          {
             int numeric = atoi(value);
-            bool resolved = false;
             int c;
             bool isAlpha = false;
             unichar ch;
@@ -326,7 +325,7 @@ public struct Date
 
    Window OnEdit(DataBox dataBox, Window obsolete, int x, int y, int w, int h, void * fieldData)
    {
-      char * string = "";
+      const char * string = "";
       DateDropBox comboBox
       {
          dataBox,
@@ -340,7 +339,7 @@ public struct Date
       {
          char tempString[MAX_F_STRING] = "";
          bool needClass = false;
-         char * result = OnGetString(tempString, null, &needClass);
+         const char * result = OnGetString(tempString, null, &needClass);
          if(result) string = result;
 
          comboBox.calendar.dateValue = this;
@@ -457,7 +456,7 @@ class DateDropBox : DropBox
       calendar.Destroy(0);
    }
 
-   bool DataBox::NotifyTextEntry(DateDropBox dropBox, char * string, bool save)
+   bool DataBox::NotifyTextEntry(DateDropBox dropBox, const char * string, bool save)
    {
       CalendarControl calendar = (CalendarControl)dropBox.calendar;
       Date date = calendar.dateValue;

@@ -2,7 +2,7 @@ namespace sys;
 
 import "File"
 
-public int UTF8toISO8859_1(char * source, char * dest, int max)
+public int UTF8toISO8859_1(const char * source, char * dest, int max)
 {
    unichar ch;
    int nb;
@@ -20,7 +20,7 @@ public int UTF8toISO8859_1(char * source, char * dest, int max)
    return d;
 }
 
-public uint16 * UTF8toUTF16Len(char * source, int byteCount, int * wordCount)
+public uint16 * UTF8toUTF16Len(const char * source, int byteCount, int * wordCount)
 {
    if(source)
    {
@@ -110,7 +110,7 @@ public uint16 * UTF8toUTF16Len(char * source, int byteCount, int * wordCount)
    return null;
 }
 
-public int UTF8toUTF16BufferLen(char * source, uint16 * dest, int max, int len)
+public int UTF8toUTF16BufferLen(const char * source, uint16 * dest, int max, int len)
 {
    if(source)
    {
@@ -165,7 +165,7 @@ public int UTF8toUTF16BufferLen(char * source, uint16 * dest, int max, int len)
    return 0;
 }
 
-public int UTF16BEtoUTF8Buffer(uint16 * source, byte * dest, int max)
+public int UTF16BEtoUTF8Buffer(const uint16 * source, byte * dest, int max)
 {
    int c;
    int d = 0;

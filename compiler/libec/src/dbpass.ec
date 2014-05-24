@@ -34,7 +34,7 @@ static void ProcessSpecifier(Specifier spec)
                      MemberInit init;
                      for(init = def.defProperties->first; init; init = init.next)
                      {
-                        Class oldThisClass = thisClass;
+                        //Class oldThisClass = thisClass;
                         ProcessMemberInit(init);
                      }
                      break;
@@ -209,7 +209,7 @@ static void ProcessExpression(Expression exp)
          if(tableStatements)
          {
             Statement databaseOpenStmt = MkCompoundStmt(MkList(), MkList());
-            Statement compound, compound2;
+            Statement compound/*, compound2*/;
             Statement ifDBStmt;
             OldList * args;
             char numIndexesString[16];

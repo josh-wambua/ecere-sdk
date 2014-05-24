@@ -40,9 +40,9 @@ typedef int bool;
 
 #define forArgsPassing 2
 int __ecereNameSpace__ecere__sys__Tokenize(char * string, int maxTokens, char * tokens[], unsigned int esc);
-char * __ecereNameSpace__ecere__sys__CopyString(char * string);
+char * __ecereNameSpace__ecere__sys__CopyString(const char * string);
 void __ecereNameSpace__ecere__com__eSystem_Delete(void * memory);
-unsigned short * __ecereNameSpace__ecere__sys__UTF8toUTF16(char * source, int * wordCount);
+unsigned short * __ecereNameSpace__ecere__sys__UTF8toUTF16(const char * source, int * wordCount);
 
 typedef struct
 {
@@ -143,7 +143,7 @@ bool DualPipe_Putc(_DualPipe * dp, char ch)
    return false;
 }
 
-bool DualPipe_Puts(_DualPipe * dp, char * string)
+bool DualPipe_Puts(_DualPipe * dp, const char * string)
 {
 #if defined(__WIN32__)
    unsigned int written;
@@ -286,7 +286,7 @@ void DualPipe_Wait(_DualPipe * dp)
 #endif
 }
 
-_DualPipe * _DualPipeOpen(PipeOpenMode mode, char * commandLine, char * env, void ** inputPtr, void ** outputPtr)
+_DualPipe * _DualPipeOpen(PipeOpenMode mode, const char * commandLine, const char * env, void ** inputPtr, void ** outputPtr)
 {
    _DualPipe * f = null;
 #define PIPE_READ    0
@@ -458,7 +458,7 @@ _DualPipe * _DualPipeOpen(PipeOpenMode mode, char * commandLine, char * env, voi
       else
          si.hStdError = hError[PIPE_WRITE] ? hError[PIPE_WRITE] : hStdErr;
 
-      if(CreateProcess(null,_wcommandLine,null,null,TRUE, 0,env,null ,&si,&pi))
+      if(CreateProcess(null,_wcommandLine,null,null,TRUE, 0,(void *)env,null ,&si,&pi))
       {
          CloseHandle(pi.hThread);
 

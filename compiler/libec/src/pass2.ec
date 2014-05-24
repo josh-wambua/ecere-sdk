@@ -1045,7 +1045,7 @@ static void ProcessExpression(Expression exp)
                                  QMkExpId(className),
                                  MkIdentifier("Destructor")
                               ),
-                              CopyList(args, CopyExpression)
+                              MkListOne(MkExpCast(MkTypeName(MkListOne(MkSpecifier(VOID)), QMkPtrDecl(null)), CopyExpression(args->first)))
                            )
                         ),
                         MkExpConstant("0")
@@ -1167,6 +1167,8 @@ static void ProcessExpression(Expression exp)
                      args->Add(sizeExp);
                      ProcessExpressionType(args->last);
                      ProcessExpression(args->last);
+
+                     DeclareFunctionUtil("memcpy");
 
                      exp.list = MkListOne(MkExpCall(MkExpIdentifier(MkIdentifier("memcpy")), args));
                      exp.type = bracketsExp;
