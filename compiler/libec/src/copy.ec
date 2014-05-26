@@ -210,6 +210,7 @@ static Instantiation CopyInstantiation(Instantiation inst)
       result.loc = exp.loc;
       result.isConstant = exp.isConstant;
       result.byReference = exp.byReference;
+      result.opDestType = exp.opDestType;
    }
 
    return result;

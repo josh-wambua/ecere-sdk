@@ -496,7 +496,7 @@ public:
          Identifier id;
          OldList * list;
          OldList * baseSpecs;
-         OldList * definitions;
+         OldList/*<ClassDef>*/ * definitions;
          bool addNameSpace;
          Context ctx;
          ExtDecl extDeclStruct;
@@ -659,6 +659,7 @@ public:
    bool addedThis;
    bool needCast;
    bool thisPtr;
+   bool opDestType;
 
    void Clear()
    {
@@ -677,6 +678,7 @@ public:
       addedThis = false;
       needCast = false;
       thisPtr = false;
+      opDestType = false;
    }
 };
 

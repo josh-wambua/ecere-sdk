@@ -1142,7 +1142,8 @@ static void OutputInitializer(Initializer initializer, File f)
          break;
       }
       case expInitializer:
-         f.Puts(" ");
+         if(initializer.id)
+            f.Puts(" ");
          if(initializer.exp)
             OutputExpression(initializer.exp, f);
          break;
@@ -1531,7 +1532,8 @@ public void OutputTree(OldList ast, File f)
             outputLine ++;
             break;
          case declarationExternal:
-            OutputDeclaration(external.declaration, f);
+            if(external.declaration)
+               OutputDeclaration(external.declaration, f);
             f.Puts("\n");
             outputLine ++;
             break;

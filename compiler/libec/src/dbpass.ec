@@ -220,8 +220,8 @@ static void ProcessExpression(Expression exp)
                MkListOne(MkInitDeclarator(MkDeclaratorIdentifier(MkIdentifier("db")), null))));
 
             // bool createNow = false;
-            databaseOpenStmt.compound.declarations->Add(MkDeclaration(MkListOne(MkSpecifierName("bool")),
-               MkListOne(MkInitDeclarator(MkDeclaratorIdentifier(MkIdentifier("createNow")), MkInitializerAssignment(MkExpIdentifier(MkIdentifier("false")))))));
+            /*databaseOpenStmt.compound.declarations->Add(MkDeclaration(MkListOne(MkSpecifierName("bool")),
+               MkListOne(MkInitDeclarator(MkDeclaratorIdentifier(MkIdentifier("createNow")), MkInitializerAssignment(MkExpIdentifier(MkIdentifier("false")))))));*/
 
             // static bool initialized = false;
             args = MkList();
@@ -259,8 +259,8 @@ static void ProcessExpression(Expression exp)
             args->Add(MkExpIdentifier(MkIdentifier("create")));
             compound.compound.statements->Add(MkExpressionStmt(MkListOne(MkExpOp(MkExpIdentifier(MkIdentifier("db")), '=',
                MkExpCall(MkExpMember(exp.dbopen.ds, MkIdentifier("OpenDatabase")), args)))));
-            compound.compound.statements->Add(MkExpressionStmt(MkListOne(MkExpOp(MkExpIdentifier(MkIdentifier("createNow")), '=',
-               MkExpIdentifier(MkIdentifier("true"))))));
+            compound.compound.statements->Add(MkExpressionStmt(MkListOne(/*MkExpOp(MkExpIdentifier(MkIdentifier("createNow")), '=',*/
+               MkExpIdentifier(MkIdentifier("true"))))); //);
 
             exp.dbopen.name = null;
             exp.dbopen.ds = null;
