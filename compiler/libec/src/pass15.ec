@@ -7964,6 +7964,10 @@ void ProcessExpressionType(Expression exp)
          //_class = classSym ? classSym.registered : null;
 
          ProcessInstantiationType(exp.instance);
+         /* TOFIX: Compiler crash
+         exp.i
+          = exp.instance.isConstant;
+         */
 
          exp.isConstant = exp.instance.isConstant;
 
