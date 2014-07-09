@@ -15,7 +15,7 @@ public class MessageBox : Window
    background = formColor;
    hasClose = true;
    tabCycle = true;
-   nativeDecorations = true;
+   creationActivation = flash;
 
 public:
    property MessageBoxType type { set { style = value; } };
