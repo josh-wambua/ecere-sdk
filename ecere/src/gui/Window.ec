@@ -6358,9 +6358,9 @@ public:
                         /*if(rootWindow == this)
                            guiApp.interfaceDriver.ActivateRootWindow(this);
                         else*/
-                        if(creationActivation == activate)
+                        if(creationActivation == activate && guiApp.desktop.active)
                            ActivateEx(true, false, true, true, null, null);
-                        else if(creationActivation == flash)
+                        else if(creationActivation == activate || creationActivation == flash)
                            Flash();
                      }
 
@@ -9125,9 +9125,9 @@ public:
                if(true || !parent.activeChild)
                   ActivateEx(true, false, true, true, null, null);
                */
-               if(creationActivation == activate)
+               if(creationActivation == activate && guiApp.desktop.active)
                   ActivateEx(true, false, true, true, null, null);
-               else if(creationActivation == flash && !object)
+               else if((creationActivation == activate || creationActivation == flash) && !object)
                   Flash();
 
                //SetVisibility(!parent.style.hidden && (style.hidden ? false : true));
