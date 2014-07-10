@@ -1590,14 +1590,22 @@ class Win32Interface : Interface
 
    void FlashRootWindow(Window window)
    {
-      FLASHWINFO flashInfo = { 0 };
-      flashInfo.cbSize = sizeof(FLASHWINFO);
-      flashInfo.hwnd = window.windowHandle;
-      flashInfo.uCount = 1;
-      flashInfo.dwFlags = FLASHW_TRAY; // FLASHW_ALL;
-      guiApp.Unlock();
-      FlashWindowEx((void *)&flashInfo);
-      guiApp.Lock();
+      if(!guiApp.desktop.active)
+         // Windows doesn't seem to flash the Window if our app is not active,
+         // but will flash it rather than activate it if we try to activate it while
+         // the app is not active.
+         SetForegroundWindow(window.windowHandle);
+      else
+      {
+         FLASHWINFO flashInfo = { 0 };
+         flashInfo.cbSize = sizeof(FLASHWINFO);
+         flashInfo.hwnd = window.windowHandle;
+         flashInfo.uCount = 1;
+         flashInfo.dwFlags = FLASHW_TRAY; // FLASHW_ALL;
+         guiApp.Unlock();
+         FlashWindowEx((void *)&flashInfo);
+         guiApp.Lock();
+      }
    }
 
    // --- Mouse-based window movement ---

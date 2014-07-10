@@ -6358,7 +6358,7 @@ public:
                         /*if(rootWindow == this)
                            guiApp.interfaceDriver.ActivateRootWindow(this);
                         else*/
-                        if(creationActivation == activate)
+                        if(creationActivation == activate || (isModal && master.active))
                            ActivateEx(true, false, true, true, null, null);
                         else if(creationActivation == flash)
                            Flash();
@@ -9125,7 +9125,7 @@ public:
                if(true || !parent.activeChild)
                   ActivateEx(true, false, true, true, null, null);
                */
-               if(creationActivation == activate)
+               if(creationActivation == activate || (isModal && master.active))
                   ActivateEx(true, false, true, true, null, null);
                else if(creationActivation == flash && !object)
                   Flash();
