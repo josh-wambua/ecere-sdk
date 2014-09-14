@@ -18,7 +18,7 @@ namespace gfx::drivers;
 
 #else
 
-   #if !defined(__ANDROID__)
+   #if !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
 
       #define property _property
       #define new _new
@@ -80,6 +80,27 @@ namespace gfx::drivers;
    #include <GLES/gl.h>
    #include <EGL/egl.h>
 
+#elif defined(__EMSCRIPTEN__)
+
+   #define property _property
+   #define uint _uint
+
+   #include <GL/gl.h>
+   #include <GL/glut.h>
+
+   //#include <GLES/gl.h>
+   //#include <EGL/egl.h>
+
+   //#include <GLES2/gl.h>
+   //#include <EGL/egl.h>
+
+   //#include <GLES2/gl2.h>
+   #include <GL/glfw.h>
+   #include <emscripten/emscripten.h>
+
+   #undef property
+   #undef uint
+
 #else
 
    #include <GL/gl.h>
@@ -93,7 +114,7 @@ import "Display"
 
 #if defined(__unix__) || defined(__APPLE__)
 
-   #ifndef __ANDROID__
+   #if !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
    import "XInterface"
    #endif
 
@@ -364,6 +385,38 @@ static double nearPlane = 1;
 
    static PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT = NULL;
 
+#elif defined(__ANDROID__)
+
+   #define GL_FRAMEBUFFER           GL_FRAMEBUFFER_OES
+   #define GL_RENDERBUFFER          GL_RENDERBUFFER_OES
+   #define GL_COLOR_ATTACHMENT0     GL_COLOR_ATTACHMENT0_OES
+
+   #define GL_POLYGON_STIPPLE 0xFFFF
+   #define GL_LINE_STIPPLE 0xFFFF
+   #define GL_LINE 0xFFFF
+   #define GL_FILL 0xFFFF
+   #define GL_ALL_ATTRIB_BITS 0xFFFF
+   #define GL_LIGHT_MODEL_LOCAL_VIEWER 0xFFFF
+
+   #define GL_POLYGON      9
+   #define GL_QUADS        7
+
+   //#define GL_QUADS              0
+   #define GL_QUAD_STRIP         0
+   //#define GL_DOUBLE             0
+   //#define GL_UNSIGNED_INT       0
+   //#define GL_FILL               0
+   //#define GL_LINE               0
+   //#define GL_LINE_STIPPLE       0
+   #define GL_BGRA_EXT           0
+   #define GL_UNPACK_ROW_LENGTH  0
+   #define GL_UNPACK_SKIP_PIXELS 0
+   #define GL_UNPACK_SKIP_ROWS   0
+   #define GL_RGBA8              0
+   #define GL_PACK_ROW_LENGTH    0
+   #define GL_PACK_SKIP_ROWS     0
+   #define GL_PACK_SKIP_PIXELS   0
+
 #endif
 
 // Our own matrix stack
@@ -377,26 +430,15 @@ static int curStack = 0;
 #if defined(__ANDROID__)
    #define glBindFramebuffer        glBindFramebufferOES
    #define glBindRenderbuffer       glBindRenderbufferOES
-   #define GL_FRAMEBUFFER           GL_FRAMEBUFFER_OES
-   #define GL_RENDERBUFFER          GL_RENDERBUFFER_OES
    #define glFramebufferTexture2D   glFramebufferTexture2DOES
-   #define GL_COLOR_ATTACHMENT0     GL_COLOR_ATTACHMENT0_OES
    #define glGenFramebuffers        glGenFramebuffersOES
    #define glGenRenderbuffers       glGenRenderbuffersOES
    #define glDeleteFramebuffers     glDeleteFramebuffersOES
    #define glDeleteRenderbuffers    glDeleteRenderbuffersOES
 
-   #define GL_POLYGON_STIPPLE 0xFFFF
-   #define GL_LINE_STIPPLE 0xFFFF
-   #define GL_LINE 0xFFFF
-   #define GL_FILL 0xFFFF
-   #define GL_ALL_ATTRIB_BITS 0xFFFF
-   #define GL_LIGHT_MODEL_LOCAL_VIEWER 0xFFFF
    #define GL_INT                                  0x1404
    #define GL_UNSIGNED_INT                         0x1405
    #define GL_DOUBLE                               0x140A
-   #define GL_POLYGON      9
-   #define GL_QUADS        7
    #define APIENTRY
 #endif
 
@@ -436,24 +478,6 @@ static int curStack = 0;
    #define glVertex3f            glesVertex3f
    #define glVertex3fv           glesVertex3fv
    #define glLightModeli         glesLightModeli
-
-#if defined(__ANDROID__)
-   //#define GL_QUADS              0
-   #define GL_QUAD_STRIP         0
-   //#define GL_DOUBLE             0
-   //#define GL_UNSIGNED_INT       0
-   //#define GL_FILL               0
-   //#define GL_LINE               0
-   //#define GL_LINE_STIPPLE       0
-   #define GL_BGRA_EXT           0
-   #define GL_UNPACK_ROW_LENGTH  0
-   #define GL_UNPACK_SKIP_PIXELS 0
-   #define GL_UNPACK_SKIP_ROWS   0
-   #define GL_RGBA8              0
-   #define GL_PACK_ROW_LENGTH    0
-   #define GL_PACK_SKIP_ROWS     0
-   #define GL_PACK_SKIP_PIXELS   0
-#endif
 
 #else
 
@@ -1263,7 +1287,7 @@ class OGLDisplay : struct
    int imageBuffers[2];
    byte * pboMemory1, * pboMemory2;
    */
-#elif !defined(__ANDROID__)
+#elif !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
    GLXContext glContext;
 
    Pixmap pixmap;
@@ -1297,7 +1321,7 @@ class OGLSystem : struct
    HDC hdc;
    HGLRC glrc;
    HWND hwnd;
-#elif !defined(__ANDROID__)
+#elif !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
    XVisualInfo * visualInfo;
    GLXContext glContext;
    GLXDrawable glxDrawable;
@@ -1340,7 +1364,7 @@ class OpenGLDisplayDriver : DisplayDriver
 
    bool LockSystem(DisplaySystem displaySystem)
    {
-#if !defined(__ANDROID__)
+#if !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
       OGLSystem oglSystem = displaySystem.driverData;
       if(useSingleGLContext) return true;
    #if defined(__WIN32__)
@@ -1362,7 +1386,7 @@ class OpenGLDisplayDriver : DisplayDriver
       wglMakeCurrent(null, null);
    #elif defined(__unix__) || defined(__APPLE__)
       // printf("Making NULL current\n");
-      #if defined(__ANDROID__)
+      #if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
       #else
       glXMakeCurrent(xGlobalDisplay, None, null);
       #endif
@@ -1372,7 +1396,7 @@ class OpenGLDisplayDriver : DisplayDriver
 
    bool Lock(Display display)
    {
-#if !defined(__ANDROID__)
+#if !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
       OGLDisplay oglDisplay = display.driverData;
       if(useSingleGLContext) return true;
    #if defined(__WIN32__)
@@ -1420,7 +1444,7 @@ class OpenGLDisplayDriver : DisplayDriver
          if(oglDisplay.memBitmap) DeleteObject(oglDisplay.memBitmap);
 
    #elif defined(__unix__) || defined(__APPLE__)
-      #if defined(__ANDROID__)
+      #if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
       #else
          if(oglDisplay.shapePixmap)
             XFreePixmap(xGlobalDisplay, oglDisplay.shapePixmap);
@@ -1602,6 +1626,20 @@ class OpenGLDisplayDriver : DisplayDriver
          egl_init_display(guiApp.desktop.windowHandle);
          CheckExtensions(oglSystem);
          result = true;
+      #elif defined(__EMSCRIPTEN__)
+         if(glfwInit() == GL_TRUE)
+         {
+            const int width = 640, height = 480;
+            if(glfwOpenWindow(width, height, 8, 8, 8, 8, 16, 0, GLFW_WINDOW) == GL_TRUE)
+            {
+               //glfwSwapBuffers();
+               result = true;
+            }
+            else
+               printf("glfwOpenWindow() failed\n"); //glfwTerminate();
+         }
+         else
+            printf("glfwInit() failed\n"); //glfwTerminate();
       #else
       {
          X11Window root = RootWindow( xGlobalDisplay, DefaultScreen( xGlobalDisplay ) );
@@ -1666,6 +1704,8 @@ class OpenGLDisplayDriver : DisplayDriver
    #elif defined(__unix__) || defined(__APPLE__)
       #if defined(__ANDROID__)
          egl_term_display();
+      #elif defined(__EMSCRIPTEN__)
+         glfwTerminate();
       #else
       if(oglSystem.visualInfo)
       {
@@ -1690,7 +1730,7 @@ class OpenGLDisplayDriver : DisplayDriver
    {
       bool result = false;
       OGLDisplay oglDisplay = display.driverData;
-#if !defined(__ANDROID__)
+#if !defined(__ANDROID__) && !defined(__EMSCRIPTEN__)
       OGLSystem oglSystem = display.displaySystem.driverData;
 #endif
       if(!oglDisplay)
@@ -1713,7 +1753,7 @@ class OpenGLDisplayDriver : DisplayDriver
          else
             ReleaseDC(display.window, oglDisplay.hdc);
    #elif defined(__unix__) || defined(__APPLE__)
-      #if defined(__ANDROID__)
+      #if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
       #else
          XVisualInfo * visualInfo = ((XWindowData)display.windowDriverData).visual;
          /*
@@ -1796,7 +1836,7 @@ class OpenGLDisplayDriver : DisplayDriver
    #if defined(__WIN32__)
          wglMakeCurrent(null, null);
    #elif defined(__unix__) || defined(__APPLE__)
-      #if defined(__ANDROID__)
+      #if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
          result = true;
       #else
          glXMakeCurrent(xGlobalDisplay, None, null);
@@ -1973,7 +2013,7 @@ class OpenGLDisplayDriver : DisplayDriver
             ReleaseDC(display.window, hdc);
          }
 #elif defined(__unix__) || defined(__APPLE__)
-      #if defined(__ANDROID__)
+      #if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
          result = true;
       #else
       	int attrib[] =
@@ -2137,7 +2177,7 @@ class OpenGLDisplayDriver : DisplayDriver
 #if defined(__WIN32__)
          wglMakeCurrent(oglDisplay.hdc, oglDisplay.glrc);
 #elif defined(__unix__) || defined(__APPLE__)
-      #if defined(__ANDROID__)
+      #if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
          width = eglWidth;
          height = eglHeight;
       #else
@@ -2271,7 +2311,7 @@ class OpenGLDisplayDriver : DisplayDriver
 
             ReleaseDC(0, hdc);
 #elif defined(__unix__) || defined(__APPLE__)
-      #if defined(__ANDROID__)
+      #if defined(__ANDROID__) || defined(__EMSCRIPTEN__)
       #else
             XTransform transform =
             {
@@ -2303,6 +2343,8 @@ class OpenGLDisplayDriver : DisplayDriver
 #elif defined(__unix__) || defined(__APPLE__)
       #if defined(__ANDROID__)
          eglSwapBuffers(eglDisplay, eglSurface);
+      #elif defined(__EMSCRIPTEN__)
+         glfwSwapBuffers();
       #else
          glXSwapBuffers(xGlobalDisplay, (GLXDrawable)display.window);
       #endif
@@ -4068,11 +4110,12 @@ IS_GLGetContext(DisplaySystem displaySystem)
 #if defined(__WIN32__)
       OGLSystem system = displaySystem.driverData;
       return system.glrc;
-#elif !defined(__ANDROID__)
+#elif defined(__ANDROID__)
+      return eglContext;
+#elif defined(__EMSCRIPTEN__)
+#else
       OGLSystem system = displaySystem.driverData;
       return system.glContext;
-#else
-      return eglContext;
 #endif
    }
    return null;
