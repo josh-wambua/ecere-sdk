@@ -923,7 +923,7 @@ public:
       get { return outputFileExt; }
       isset { return outputFileExt && outputFileExt[0]; }
    }
-   property const char * execPrefixCommand // <-- old name for json ide settings file compatibility
+   property const char * executableLauncher
    {
       set { delete executableLauncher; if(value && value[0]) executableLauncher = CopyString(value); }
       get { return executableLauncher; }
@@ -941,7 +941,7 @@ public:
       get { return distccHosts; }
       isset { return distccHosts && distccHosts[0]; }
    }
-   property const char * gccPrefix // <-- old name for json ide settings file compatibility
+   property const char * gnuToolchainPrefix
    {
       set { delete gnuToolchainPrefix; if(value && value[0]) gnuToolchainPrefix = CopyString(value); }
       get { return gnuToolchainPrefix; }
@@ -1079,6 +1079,19 @@ public:
       get { return linkerFlags; }
       isset { return linkerFlags.count != 0; }
    }
+   // json backward compatibility
+   property const char * gccPrefix
+   {
+      set { delete gnuToolchainPrefix; if(value && value[0]) gnuToolchainPrefix = CopyString(value); }
+      get { return gnuToolchainPrefix; }
+      isset { return false; }
+   }
+   property const char * execPrefixCommand
+   {
+      set { delete executableLauncher; if(value && value[0]) executableLauncher = CopyString(value); }
+      get { return executableLauncher; }
+      isset { return false; }
+   }
 private:
    Array<String> includeDirs { };
    Array<String> libraryDirs { };
@@ -1143,6 +1156,8 @@ private:
       if(eCcompilerFlags) { eCcompilerFlags.Free(); }
       if(linkerFlags) { linkerFlags.Free(); }
    }
+
+public:
    CompilerConfig Copy()
    {
       CompilerConfig copy
