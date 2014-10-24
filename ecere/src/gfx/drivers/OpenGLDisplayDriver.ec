@@ -3824,11 +3824,13 @@ class OpenGLDisplayDriver : DisplayDriver
       //Logf("SelectMesh\n");
 
 #if !defined( __ANDROID__) && !defined(__APPLE__)
+
 #if defined(__WIN32__)
       if(glUnlockArraysEXT)
 #endif
-         if(display.display3D.mesh)
+         if(!vboAvailable && display.display3D.mesh)
             glUnlockArraysEXT();
+
 #endif
       if(mesh)
       {
@@ -3904,7 +3906,9 @@ class OpenGLDisplayDriver : DisplayDriver
 #if defined(__WIN32__)
          if(glLockArraysEXT)
 #endif
-            glLockArraysEXT(0, mesh.nVertices);
+            if(!vboAvailable)
+               glLockArraysEXT(0, mesh.nVertices);
+
 #endif
       }
       else
