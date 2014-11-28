@@ -107,6 +107,12 @@ namespace gfx::drivers;
 
 #endif
 
+#if defined(__EMSCRIPTEN__)
+#define EM_MODE
+#endif
+
+#define EM_MODE
+
 #undef pointer
 
 import "Display"
@@ -1209,7 +1215,7 @@ public void glesTerminate()
 }
 
 static GLuint stippleTexture;
-#if defined(_GLES) || defined(__EMSCRIPTEN__)
+#if defined(_GLES) || defined(EM_MODE)
 static bool stippleEnabled;
 #endif
 
@@ -1241,7 +1247,7 @@ public void glesLineStipple( int i, unsigned short j )
 
 public void glesLightModeli( unsigned int pname, int param )
 {
-#if !defined(__EMSCRIPTEN__)
+#if !defined(EM_MODE)
    if(pname == GL_LIGHT_MODEL_TWO_SIDE)
       glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, param);
 #endif
@@ -1942,7 +1948,9 @@ class OpenGLDisplayDriver : DisplayDriver
          glShadeModel(GL_FLAT);
 
          // glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, true);
+#if !defined(EM_MODE)
          glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
+#endif
          glFogi(GL_FOG_MODE, GL_EXP);
          glFogf(GL_FOG_DENSITY, 0);
          glEnable(GL_NORMALIZE);
@@ -2850,7 +2858,7 @@ class OpenGLDisplayDriver : DisplayDriver
 
       glColor4fv(oglSurface.foreground);
       glBegin(GL_LINES);
-#if defined(_GLES) || defined(__EMSCRIPTEN__)
+#if defined(_GLES) || defined(EM_MODE)
       if(stippleEnabled)
       {
          glTexCoord2f(0.5f, 0);
@@ -2883,7 +2891,7 @@ class OpenGLDisplayDriver : DisplayDriver
       //Logf("Rectangle\n");
 
       glColor4fv(oglSurface.foreground);
-#if defined(_GLES) || defined(__EMSCRIPTEN__)
+#if defined(_GLES) || defined(EM_MODE)
       if(stippleEnabled)
       {
          glBegin(GL_LINES);
@@ -2933,7 +2941,7 @@ class OpenGLDisplayDriver : DisplayDriver
 
       glColor4fv(oglSurface.background);
 
-#ifdef __EMSCRIPTEN__
+#ifdef EM_MODE
       glBegin(GL_QUADS);
       glVertex2f(x1+surface.offset.x, y1+surface.offset.y);
       glVertex2f(x1+surface.offset.x, y2+surface.offset.y+1);
@@ -3115,7 +3123,7 @@ class OpenGLDisplayDriver : DisplayDriver
 
    void StretchDI(Display display, Surface surface, Bitmap bitmap, int dx, int dy, int sx, int sy, int w, int h, int sw, int sh)
    {
-#if !defined(__EMSCRIPTEN__)
+#if !defined(EM_MODE)
       float s2dw,s2dh,d2sw,d2sh;
       //bool flipX = false, flipY = false;
 
@@ -3217,7 +3225,7 @@ class OpenGLDisplayDriver : DisplayDriver
 
    void BlitDI(Display display, Surface surface, Bitmap bitmap, int dx, int dy, int sx, int sy, int w, int h)
    {
-#if !defined(__EMSCRIPTEN__)
+#if !defined(EM_MODE)
       //Logf("BlitDI\n");
 
       //Clip against the edges of the source
@@ -3379,7 +3387,7 @@ class OpenGLDisplayDriver : DisplayDriver
 
       if(stipple)
       {
-#if defined(_GLES) || defined(__EMSCRIPTEN__)
+#if defined(_GLES) || defined(EM_MODE)
          stippleEnabled = true;
          glesLineStipple(1, (uint16)stipple);
 #else
@@ -3389,7 +3397,7 @@ class OpenGLDisplayDriver : DisplayDriver
       }
       else
       {
-#if defined(_GLES) || defined(__EMSCRIPTEN__)
+#if defined(_GLES) || defined(EM_MODE)
          stippleEnabled = false;
          glMatrixMode(GL_TEXTURE);
          glLoadIdentity();
@@ -3440,8 +3448,8 @@ class OpenGLDisplayDriver : DisplayDriver
             break;
          case ambient:
          {
+#if !defined(EM_MODE)
             float ambient[4] = { ((Color)value).r/255.0f, ((Color)value).g/255.0f, ((Color)value).b/255.0f, 1.0f };
-#if !defined(__EMSCRIPTEN__)
             glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient);
 #endif
             break;
@@ -3463,6 +3471,7 @@ class OpenGLDisplayDriver : DisplayDriver
 
    void SetLight(Display display, int id, Light light)
    {
+#if !defined(EM_MODE)
       //Logf("SetLight\n");
 
       if(light != null)
@@ -3609,11 +3618,13 @@ class OpenGLDisplayDriver : DisplayDriver
             position[1] = direction.y;
             position[2] = direction.z;
 
+            PrintLn("position");
             glLightfv(GL_LIGHT0 + id, GL_POSITION, position);
          }
       }
       else
          glDisable(GL_LIGHT0 + id);
+#endif
    }
 
    void SetCamera(Display display, Surface surface, Camera camera)
@@ -3639,7 +3650,10 @@ class OpenGLDisplayDriver : DisplayDriver
 
          // *** Projection Matrix ***
          if(!display.display3D.camera)
+         {
+            glMatrixMode(GL_PROJECTION);
             glPushMatrix();
+         }
          else
             glMatrixMode(GL_PROJECTION);
          if(display.display3D.collectingHits)
@@ -3685,8 +3699,10 @@ class OpenGLDisplayDriver : DisplayDriver
          // ...
 
          glEnable(GL_DEPTH_TEST);
+#if !defined(EM_MODE)
          glEnable(GL_LIGHTING);
          glShadeModel(GL_SMOOTH);
+#endif
          glDepthMask((byte)bool::true);
          oglDisplay.depthWrite = true;
 
@@ -3702,7 +3718,9 @@ class OpenGLDisplayDriver : DisplayDriver
          glDisable(GL_LIGHTING);
          glDisable(GL_FOG);
          glDisable(GL_TEXTURE_2D);
+#if !defined(EM_MODE)
          glShadeModel(GL_FLAT);
+#endif
          glEnable(GL_BLEND);
          glDisable(GL_MULTISAMPLE_ARB);
 
@@ -3724,12 +3742,16 @@ class OpenGLDisplayDriver : DisplayDriver
       // Basic Properties
       if(material.flags.doubleSided)
       {
+#if !defined(EM_MODE)
          glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, !material.flags.singleSideLight);
+#endif
          glDisable(GL_CULL_FACE);
       }
       else
       {
+#if !defined(EM_MODE)
          glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, bool::false);
+#endif
          glEnable(GL_CULL_FACE);
       }
 
@@ -3766,6 +3788,9 @@ class OpenGLDisplayDriver : DisplayDriver
       else
          glDisable(GL_TEXTURE_2D);
 
+#ifdef EM_MODE
+      glColor4f(material.diffuse.r, material.diffuse.g, material.diffuse.b, material.opacity);
+#else
       if(mesh.flags.colors)
       {
          glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
@@ -3793,6 +3818,7 @@ class OpenGLDisplayDriver : DisplayDriver
       }
 
       glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, &material.power);
+#endif
    }
 
    void FreeMesh(DisplaySystem displaySystem, Mesh mesh)
@@ -4034,7 +4060,7 @@ class OpenGLDisplayDriver : DisplayDriver
    {
       //Logf("SelectMesh\n");
 
-#if !defined( __ANDROID__) && !defined(__APPLE__)
+#if !defined( __ANDROID__) && !defined(__APPLE__) && !defined(__EMSCRIPTEN__)
 
 #if defined(__WIN32__)
       if(glUnlockArraysEXT)
@@ -4118,7 +4144,7 @@ class OpenGLDisplayDriver : DisplayDriver
                glDisableClientState(GL_COLOR_ARRAY);
          }
 
-#if !defined(__ANDROID__) && !defined(__APPLE__)
+#if !defined(__ANDROID__) && !defined(__APPLE__) && !defined(__EMSCRIPTEN__)
 
 #if defined(__WIN32__)
          if(glLockArraysEXT)
