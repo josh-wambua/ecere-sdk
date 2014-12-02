@@ -640,11 +640,18 @@ return 1;
 
 void __ecereMethod___ecereNameSpace__ecere__com__Map_Delete(struct __ecereNameSpace__ecere__com__Instance * this, struct __ecereNameSpace__ecere__com__MapNode * node)
 {
-struct __ecereNameSpace__ecere__com__MapNode * n = node;
+uint64 value = (__extension__ ({
+uint64 (*  __internal_VirtualMethod)(struct __ecereNameSpace__ecere__com__Instance *, struct __ecereNameSpace__ecere__com__IteratorPointer * pointer);
 
-if(((struct __ecereNameSpace__ecere__com__Instance *)(char *)this)->_class->templateArgs[5].__anon1.__anon1.dataTypeClass->type == 1)
-n = (struct __ecereNameSpace__ecere__com__MapNode *)(((unsigned char *)node) + ((struct __ecereNameSpace__ecere__com__Instance *)(char *)this)->_class->templateArgs[5].__anon1.__anon1.dataTypeClass->structSize - sizeof node->key);
-(((void (* )(void *  _class, void *  data))((struct __ecereNameSpace__ecere__com__Instance *)(char *)this)->_class->templateArgs[6].__anon1.__anon1.dataTypeClass->_vTbl[__ecereVMethodID_class_OnFree])(((struct __ecereNameSpace__ecere__com__Instance * )(char * )this)->_class->templateArgs[6].__anon1.__anon1.dataTypeClass, ((void * )((uintptr_t)(__ecereProp___ecereNameSpace__ecere__com__MapNode_Get_value(n))))), __ecereProp___ecereNameSpace__ecere__com__MapNode_Set_value(n, 0));
+__internal_VirtualMethod = ((uint64 (*)(struct __ecereNameSpace__ecere__com__Instance *, struct __ecereNameSpace__ecere__com__IteratorPointer * pointer))__extension__ ({
+struct __ecereNameSpace__ecere__com__Instance * __internal_ClassInst = this;
+
+__internal_ClassInst ? __internal_ClassInst->_vTbl : __ecereClass___ecereNameSpace__ecere__com__Map->_vTbl;
+})[__ecereVMethodID___ecereNameSpace__ecere__com__Container_GetData]);
+__internal_VirtualMethod ? __internal_VirtualMethod(this, (void *)(node)) : (uint64)1;
+}));
+
+(((void (* )(void *  _class, void *  data))((struct __ecereNameSpace__ecere__com__Instance *)(char *)this)->_class->templateArgs[6].__anon1.__anon1.dataTypeClass->_vTbl[__ecereVMethodID_class_OnFree])(((struct __ecereNameSpace__ecere__com__Instance * )(char * )this)->_class->templateArgs[6].__anon1.__anon1.dataTypeClass, ((void * )((uintptr_t)(value)))), value = 0);
 (__extension__ ({
 void (*  __internal_VirtualMethod)(struct __ecereNameSpace__ecere__com__Instance *, struct __ecereNameSpace__ecere__com__IteratorPointer * it);
 
@@ -857,7 +864,6 @@ __ecereClass___ecereNameSpace__ecere__com__MapNode->Destructor ? __ecereClass___
 void __ecereMethod___ecereNameSpace__ecere__com__Map_Free(struct __ecereNameSpace__ecere__com__Instance * this)
 {
 struct __ecereNameSpace__ecere__com__MapNode * node = (void *)(((struct __ecereNameSpace__ecere__com__CustomAVLTree *)(((char *)this + 0 + sizeof(struct __ecereNameSpace__ecere__com__Instance))))->root);
-size_t offset = ((struct __ecereNameSpace__ecere__com__Instance *)(char *)this)->_class->templateArgs[5].__anon1.__anon1.dataTypeClass->type == 1 ? ((struct __ecereNameSpace__ecere__com__Instance *)(char *)this)->_class->templateArgs[5].__anon1.__anon1.dataTypeClass->structSize - sizeof node->key : 0;
 
 while(node)
 {
@@ -878,9 +884,18 @@ node = right;
 else
 {
 struct __ecereNameSpace__ecere__com__MapNode * parent = node->parent;
-struct __ecereNameSpace__ecere__com__MapNode * n = (struct __ecereNameSpace__ecere__com__MapNode *)((unsigned char *)node + offset);
+uint64 value = (__extension__ ({
+uint64 (*  __internal_VirtualMethod)(struct __ecereNameSpace__ecere__com__Instance *, struct __ecereNameSpace__ecere__com__IteratorPointer * pointer);
 
-(((void (* )(void *  _class, void *  data))((struct __ecereNameSpace__ecere__com__Instance *)(char *)this)->_class->templateArgs[6].__anon1.__anon1.dataTypeClass->_vTbl[__ecereVMethodID_class_OnFree])(((struct __ecereNameSpace__ecere__com__Instance * )(char * )this)->_class->templateArgs[6].__anon1.__anon1.dataTypeClass, ((void * )((uintptr_t)(__ecereProp___ecereNameSpace__ecere__com__MapNode_Get_value(n))))), __ecereProp___ecereNameSpace__ecere__com__MapNode_Set_value(n, 0));
+__internal_VirtualMethod = ((uint64 (*)(struct __ecereNameSpace__ecere__com__Instance *, struct __ecereNameSpace__ecere__com__IteratorPointer * pointer))__extension__ ({
+struct __ecereNameSpace__ecere__com__Instance * __internal_ClassInst = this;
+
+__internal_ClassInst ? __internal_ClassInst->_vTbl : __ecereClass___ecereNameSpace__ecere__com__Map->_vTbl;
+})[__ecereVMethodID___ecereNameSpace__ecere__com__Container_GetData]);
+__internal_VirtualMethod ? __internal_VirtualMethod(this, (void *)(node)) : (uint64)1;
+}));
+
+(((void (* )(void *  _class, void *  data))((struct __ecereNameSpace__ecere__com__Instance *)(char *)this)->_class->templateArgs[6].__anon1.__anon1.dataTypeClass->_vTbl[__ecereVMethodID_class_OnFree])(((struct __ecereNameSpace__ecere__com__Instance * )(char * )this)->_class->templateArgs[6].__anon1.__anon1.dataTypeClass, ((void * )((uintptr_t)(value)))), value = 0);
 ((node ? __extension__ ({
 void * __ecerePtrToDelete = (node);
 

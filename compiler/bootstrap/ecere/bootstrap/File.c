@@ -1095,7 +1095,10 @@ __internal_ClassInst ? __internal_ClassInst->_vTbl : __ecereClass___ecereNameSpa
 })[__ecereVMethodID___ecereNameSpace__ecere__sys__File_Getc]);
 __internal_VirtualMethod ? __internal_VirtualMethod(this, &ch) : (unsigned int)1;
 })))
+{
 result = 0;
+break;
+}
 if((ch != '\n') && (ch != '\r') && (ch != ' ') && (ch != ',') && (ch != '\t'))
 break;
 if((__extension__ ({
