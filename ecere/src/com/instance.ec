@@ -5235,6 +5235,19 @@ public dllexport DataMember eClass_AddDataMember(Class _class, const char * name
             bool pointerAlignment = alignment == 0xF000F000;
             bool force64Bits = (_class.module.application.isGUIApp & 2) ? true : false;
             bool force32Bits = (_class.module.application.isGUIApp & 4) ? true : false;
+            if((force32Bits || force64Bits) && !strcmp(_class.name, "AVLNode") && !strcmp(name, "__ecerePrivateData0"))
+            {
+               if(force64Bits)
+               {
+                  type = "byte[32]";
+                  size = 32;
+               }
+               if(force32Bits)
+               {
+                  type = "byte[16]";
+                  size = 16;
+               }
+            }
 
             if(pointerAlignment) alignment = force64Bits ? 8 : force32Bits ? 4 : sizeof(void *);
 
