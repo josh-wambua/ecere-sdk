@@ -531,8 +531,8 @@ public:
    {
       if(key == hotKey)
       {
-         return NotifyPushed(master, this, 0,0, key.modifiers);
-         // return true;
+         /*return */NotifyPushed(master, this, 0,0, key.modifiers);
+         return false; //true;
       }
       return true;
    }
@@ -552,7 +552,7 @@ public:
       button.pressing = true;
       button.NotifyClicked(this, button, x, y, mods);
       button.timer.Start();
-      return false; //true;
+      return true;
    }
 
    bool NotifyMouseLeave(RepButton button, Modifiers mods)
