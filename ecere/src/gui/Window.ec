@@ -4394,6 +4394,11 @@ private:
                incref window;
                if(!MouseMethod(window, clientX, clientY, *mods))
                   result = false;
+
+#ifdef __ANDROID__
+               if(method == __ecereVMethodID___ecereNameSpace__ecere__gui__Window_OnLeftButtonUp)
+                  window.OnMouseLeave(*mods);
+#endif
                delete window;
             }
          }
